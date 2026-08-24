@@ -40,7 +40,7 @@ flowchart TD
 
 ### Step 1: Discover & Map Missing Tests
 1. Inspect `src/Application/Features/` for all Commands, Queries, and Validators.
-2. Check existing tests in `tech-curse-api.Test.Unit` and `tech-curse-api.Test.Integration`.
+2. Check existing tests in `tech-curse.Test.Unit` and `tech-curse.Test.Integration`.
 3. Generate a prioritized test backlog covering:
    - **Happy Path:** Valid payload returns expected response / status code.
    - **Validation Failures:** FluentValidation triggers 422 Unprocessable Entity.

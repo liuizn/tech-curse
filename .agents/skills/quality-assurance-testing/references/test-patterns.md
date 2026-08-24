@@ -93,10 +93,10 @@ Enforce architectural boundaries across assemblies.
 ```csharp
 public class ArchitectureTests
 {
-    private const string DomainNamespace = "tech_curse_api.src.Domain";
-    private const string ApplicationNamespace = "tech_curse_api.src.Application";
-    private const string InfrastructureNamespace = "tech_curse_api.src.Infrastructure";
-    private const string ApiNamespace = "tech_curse_api.src.API";
+    private const string DomainNamespace = "TechCurse.src.Domain";
+    private const string ApplicationNamespace = "TechCurse.src.Application";
+    private const string InfrastructureNamespace = "TechCurse.src.Infrastructure";
+    private const string ApiNamespace = "TechCurse.src.API";
 
     [Fact]
     public void Domain_Should_Not_HaveDependencyOnOtherProjects()

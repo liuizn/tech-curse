@@ -30,7 +30,7 @@ A versão **v1.2.0** representa um marco arquitetural no projeto **Tech Curse AP
 - Correção estrutural das rotas `/process` e `/refund` para `/tech-curse/payment/process` e `/tech-curse/payment/refund`, restaurando o padrão RESTful.
 
 ### 4. Suíte de 204 Testes Automatizados
-- **Testes de Arquitetura (NetArchTest):** 23 testes garantindo isolamento de camadas e convenções de nomenclatura em um novo projeto dedicado `tech-curse-api.Test.Architecture`.
+- **Testes de Arquitetura (NetArchTest):** 23 testes garantindo isolamento de camadas e convenções de nomenclatura em um novo projeto dedicado `tech-curse.Test.Architecture`.
 - **Testes Unitários:** 143 testes cobrindo todos os Handlers, Validators e Domain Specifications.
 - **Testes de Integração:** 38 testes ponta a ponta com `WebApplicationFactory` cobrindo endpoints e middlewares.
 

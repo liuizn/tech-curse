@@ -103,10 +103,10 @@ docker-compose up -d
 
 # 3. Restaurar dependências e aplicar Migrations
 dotnet restore
-dotnet ef database update --project tech-curse-api/src/Infrastructure --startup-project tech-curse-api/src/API
+dotnet ef database update --project tech-curse/src/Infrastructure --startup-project tech-curse/src/API
 
 # 4. Executar a API
-dotnet run --project tech-curse-api/src/API
+dotnet run --project tech-curse/src/API
 ```
 
 A API estará acessível em:
@@ -124,7 +124,7 @@ A solução conta com **204 testes automatizados** distribuídos em 3 projetos e
 dotnet test --logger "console;verbosity=normal"
 ```
 
-1. **`tech-curse-api.Test.Architecture` (23 testes):** Validação de regras da Clean Architecture com NetArchTest.
-2. **`tech-curse-api.Test.Unit` (143 testes):** Testes unitários de Handlers, Validators e Domain Specifications.
-3. **`tech-curse-api.Test.Integration` (38 testes):** Testes ponta a ponta com `WebApplicationFactory` simulando autenticação, endpoints e middlewares.
+1. **`tech-curse.Test.Architecture` (23 testes):** Validação de regras da Clean Architecture com NetArchTest.
+2. **`tech-curse.Test.Unit` (143 testes):** Testes unitários de Handlers, Validators e Domain Specifications.
+3. **`tech-curse.Test.Integration` (38 testes):** Testes ponta a ponta com `WebApplicationFactory` simulando autenticação, endpoints e middlewares.
 ```

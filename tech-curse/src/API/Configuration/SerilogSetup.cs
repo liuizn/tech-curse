@@ -1,0 +1,25 @@
+﻿using Serilog;
+using Serilog.Formatting.Json;
+
+namespace TechCurse.src.API.Configuration;
+
+public static class SerilogSetup
+{
+    public static IServiceCollection AddSerilogSetup(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSerilog((serviceProvider, loggerConfiguration) =>
+        {
+            var seqConnectionString =
+                configuration.GetConnectionString("SeqUrl")
+                ?? throw new InvalidOperationException("Connection string 'SeqUrl' not found.");
+
+            loggerConfiguration
+                .ReadFrom.Configuration(configuration)
+                .Enrich.FromLogContext()
+                .WriteTo.Console(new JsonFormatter())
+                .WriteTo.Seq(seqConnectionString);
+        });
+
+        return services;
+    }
+}

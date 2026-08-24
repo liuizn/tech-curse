@@ -1,9 +1,0 @@
-<Solution>
-  <Project Path="tech-curse-api.Test.Architecture/tech-curse-api.Test.Architecture.csproj" />
-  <Project Path="tech-curse-api.Test.Integration/tech-curse-api.Test.Integration.csproj" Id="51bc4393-f6fa-478a-a0e6-a693106cd431" />
-  <Project Path="tech-curse-api.Test.Unit/tech-curse-api.Test.Unit.csproj" Id="3aae9ba0-4115-4ab7-bf47-41bdb38116ba" />
-  <Project Path="tech-curse-api/src/API/tech-curse-api.API.csproj" />
-  <Project Path="tech-curse-api/src/Application/tech-curse-api.Application.csproj" />
-  <Project Path="tech-curse-api/src/Domain/tech-curse-api.Domain.csproj" />
-  <Project Path="tech-curse-api/src/Infrastructure/tech-curse-api.Infrastructure.csproj" />
-</Solution>
