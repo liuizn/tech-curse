@@ -12,7 +12,7 @@ This document defines the standard for configuring repository metadata, tags/top
 *Character count: ~180 characters (ideal for GitHub summary preview).*
 
 ### Website URL
-`https://github.com/Liuizn/tech-curse-api` (ou URL do Swagger/Deploy)
+`https://github.com/Liuizn/tech-curse` (ou URL do Swagger/Deploy)
 
 ---
 
