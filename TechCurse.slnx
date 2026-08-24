@@ -6,6 +6,7 @@
     <Project Path="src/Api/TechCurse.Api.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/TechCurse.Domain.UnitTests/TechCurse.Domain.UnitTests.csproj" />
     <Project Path="tests/TechCurse.Application.UnitTests/TechCurse.Application.UnitTests.csproj" />
     <Project Path="tests/TechCurse.Api.IntegrationTests/TechCurse.Api.IntegrationTests.csproj" />
     <Project Path="tests/TechCurse.ArchitectureTests/TechCurse.ArchitectureTests.csproj" />

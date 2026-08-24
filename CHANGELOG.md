@@ -7,6 +7,25 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [Unreleased]
+
+### ♻️ Alterado
+- **Estrutura de pastas padronizada** para o layout convencional de Clean Architecture em .NET: `src/` e `tests/` na raiz do repositório, no estilo do template `dotnet new ca-sln`. A pasta `tech-curse/` intermediária foi eliminada e `src/API` passou a `src/Api`.
+- **Projetos e assemblies renomeados** de `tech-curse.*` para `TechCurse.*`, restabelecendo a regra `.csproj` = `AssemblyName` = `RootNamespace`. A solution passou de `tech-curse.slnx` para `TechCurse.slnx`, agora com solution folders espelhando o disco.
+- **Namespaces** `TechCurse.src.<Camada>` passaram a `TechCurse.<Camada>`; o segmento `src` era artefato de derivação por caminho. As migrations passaram de `TechCurse.Migrations` para `TechCurse.Infrastructure.Migrations`.
+- **Projetos de teste renomeados** para `TechCurse.ArchitectureTests`, `TechCurse.Application.UnitTests` e `TechCurse.Api.IntegrationTests`.
+- `PaymentPersistenceTests` (antigo `PaymentTests`) convertido de ISO-8859-1 para UTF-8, corrigindo os acentos dos comentários em pt-BR.
+
+### ✨ Adicionado
+- **`TechCurse.Domain.UnitTests`** — quarto projeto de teste, com os 6 testes de entidades e Specifications que antes viviam no projeto de unitários de aplicação. Referencia exclusivamente `TechCurse.Domain`.
+
+### 🐛 Corrigido
+- `TechCurse.Application.UnitTests` referenciava `TechCurse.Api` sem utilizá-lo e dependia de `TechCurse.Infrastructure` apenas por transitividade. Com os testes de persistência movidos para o projeto de integração, ambas as referências foram removidas.
+
+> Distribuição atual dos 204 testes: 23 arquitetura, 6 domínio, 133 aplicação, 42 integração.
+
+---
+
 ## [1.2.0] - 2026-08-16
 
 ### 🌟 Resumo Executivo
@@ -51,9 +70,9 @@ Além disso, esta release consolida uma suíte robusta de **204 testes automatiz
 - Integração com Serilog e sink para Seq Dashboard (`http://localhost:9000`).
 
 #### 6. Suíte de 204 Testes Automatizados (100% Passing)
-- **Testes de Arquitetura (`TechCurse.ArchitectureTests` - 23 testes):** Governança automatizada via NetArchTest para garantir a integridade das camadas da Clean Architecture (nenhuma dependência inversa para o Domain).
-- **Testes Unitários (`TechCurse.Application.UnitTests` - 143 testes):** Cobertura unitária exaustiva de todos os Handlers, Validators do FluentValidation e Domain Specifications com `Moq` e `FluentAssertions`.
-- **Testes de Integração (`TechCurse.Api.IntegrationTests` - 38 testes):** Testes de ponta a ponta com `WebApplicationFactory` cobrindo autenticação JWT, autorização RBAC, middlewares e persistência em memória.
+- **Testes de Arquitetura (`tech-curse.Test.Architecture` - 23 testes):** Governança automatizada via NetArchTest para garantir a integridade das camadas da Clean Architecture (nenhuma dependência inversa para o Domain).
+- **Testes Unitários (`tech-curse.Test.Unit` - 143 testes):** Cobertura unitária exaustiva de todos os Handlers, Validators do FluentValidation e Domain Specifications com `Moq` e `FluentAssertions`.
+- **Testes de Integração (`tech-curse.Test.Integration` - 38 testes):** Testes de ponta a ponta com `WebApplicationFactory` cobrindo autenticação JWT, autorização RBAC, middlewares e persistência em memória.
 
 ---
 

@@ -3,9 +3,9 @@ using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
 using TechCurse.Infrastructure.Data;
 
-namespace TechCurse.Application.UnitTests;
+namespace TechCurse.Api.IntegrationTests.Persistence;
 
-public class PaymentTests
+public class PaymentPersistenceTests
 {
     private DbContextOptions<TechCurseContext> CreateOptions()
     {
@@ -15,7 +15,7 @@ public class PaymentTests
     }
 
     [Fact]
-    [Trait("Category", "unit")]
+    [Trait("Category", "Integration")]
     public void AdicionarPagamento_DeveAdicionarPagamentoComSucesso()
     {
         // Arrange
@@ -43,7 +43,7 @@ public class PaymentTests
     }
 
     [Fact]
-    [Trait("Category", "unit")]
+    [Trait("Category", "Integration")]
     public void AtualizarStatusPagamento_DeveAtualizarStatusComSucesso()
     {
         // Arrange
@@ -71,7 +71,7 @@ public class PaymentTests
     }
 
     [Fact]
-    [Trait("Category", "unit")]
+    [Trait("Category", "Integration")]
     public void EstadosPagamento_DevePermitirTransicoesDePendingParaPaidFailedRefunded()
     {
         // Arrange
@@ -110,7 +110,7 @@ public class PaymentTests
     }
 
     [Fact]
-    [Trait("Category", "unit")]
+    [Trait("Category", "Integration")]
     public void Idempotencia_AtualizarMesmoStatusDiversasVezes_NaoCriaDuplicatas()
     {
         // Arrange
@@ -126,16 +126,16 @@ public class PaymentTests
         context.Payments.Add(payment);
         context.SaveChanges();
 
-        // Act: aplicar a mesma transição várias vezes
+        // Act: aplicar a mesma transiÃ§Ã£o vÃ¡rias vezes
         payment.Status = PaymentStatus.Paid;
         context.Payments.Update(payment);
         context.SaveChanges();
 
-        payment.Status = PaymentStatus.Paid; // mesma operação novamente
+        payment.Status = PaymentStatus.Paid; // mesma operaÃ§Ã£o novamente
         context.Payments.Update(payment);
         context.SaveChanges();
 
-        // Assert: somente um registro existe e status é Paid
+        // Assert: somente um registro existe e status Ã© Paid
         var payments = context.Payments.Where(p => p.EnrollmentId == payment.EnrollmentId).ToList();
         Assert.Single(payments);
         Assert.Equal(PaymentStatus.Paid, payments[0].Status);

@@ -99,10 +99,11 @@ No Docker Compose essas chaves chegam como `Jwt__SigningKey`, `ConnectionStrings
 
 ## Testes
 
-Três projetos, todos xUnit + FluentAssertions:
+Quatro projetos em `tests/`, todos xUnit + FluentAssertions. Cada um referencia só a camada que exercita — se um teste novo pede uma referência a mais, é sinal de que ele está no projeto errado:
 
-- `TechCurse.Application.UnitTests` — handlers e validators isolados com **Moq** (`Mock<IPaymentRepository>` etc.), montando o handler no construtor da classe de teste. Padrão de nome: `Handle_WhenX_ShouldY`, com `[Trait("Category", "Unit")]`.
-- `TechCurse.Api.IntegrationTests` — `CustomWebApplicationFactory : WebApplicationFactory<Program>` (por isso existe `public partial class Program { }` no fim do `Program.cs`). Usa EF InMemory, `InMemoryTestCacheService` no lugar do Redis e helpers `CreateAdminClient()` / `CreateStudentClient()` / `CreateInstructorClient()` que já injetam um JWT válido.
+- `TechCurse.Domain.UnitTests` — entidades e `ISpecification<T>` sem nenhum mock. Referencia apenas `TechCurse.Domain`.
+- `TechCurse.Application.UnitTests` — handlers e validators isolados com **Moq** (`Mock<IPaymentRepository>` etc.), montando o handler no construtor da classe de teste. Padrão de nome: `Handle_WhenX_ShouldY`, com `[Trait("Category", "Unit")]`. Referencia `TechCurse.Application` e `TechCurse.Domain` — **não** referencia Infrastructure nem Api.
+- `TechCurse.Api.IntegrationTests` — `CustomWebApplicationFactory : WebApplicationFactory<Program>` (por isso existe `public partial class Program { }` no fim do `Program.cs`). Usa EF InMemory, `InMemoryTestCacheService` no lugar do Redis e helpers `CreateAdminClient()` / `CreateStudentClient()` / `CreateInstructorClient()` que já injetam um JWT válido. `Persistence/` abriga os testes que batem direto no `TechCurseContext`, sem subir o host HTTP.
 - `TechCurse.ArchitectureTests` — NetArchTest sobre os assemblies referenciados em `Common/ArchitectureConstants.cs`. Impõe: isolamento de camadas, handlers/validators em `TechCurse.Application.Features.*`, sufixos `Handler`/`Validator`/`Controller`/`Repository`, repositórios em `Infrastructure.Repositories`, e controllers sem dependência de `TechCurseContext` nem de repositórios (só `IMediator`).
 
 Ao criar uma nova slice, o caminho completo é: `Command`/`Query` + `Handler` + `Validator` na pasta da feature → interface de repositório em `Application/Interfaces` → implementação em `Infrastructure/Repositories` (registrada em `Infrastructure/DependencyInjection.cs`) → action no controller com `SwaggerOperation`/`SwaggerResponse` → testes unitários do handler e do validator.
@@ -110,7 +111,6 @@ Ao criar uma nova slice, o caminho completo é: `Command`/`Query` + `Handler` + 
 ## Armadilhas conhecidas
 
 - **Migrations vivem em `src/Infrastructure/Migrations/`** (namespace `TechCurse.Infrastructure.Migrations`), mesmo assembly do `TechCurseContext` — por isso não é preciso configurar `MigrationsAssembly()`. O EF localiza migrations pelos atributos `[DbContext]`/`[Migration]`, não por convenção de diretório. Nada fora de `src/` entra em compilação, e o `Dockerfile` copia apenas `src/`: arquivo de código colocado fora dessa árvore é silenciosamente ignorado pelo build.
-- **`TechCurse.Application.UnitTests` abriga dois testes que não são dele**: `Specifications/PaymentProcessableSpecificationTests.cs` exercita o Domain e `PaymentTests.cs` sobe um `TechCurseContext` com EF InMemory (é teste de persistência, não unitário). Por isso o projeto referencia `TechCurse.Infrastructure`. Ao dividir em `TechCurse.Domain.UnitTests` / mover o `PaymentTests` para os testes de integração, essa referência sai junto.
 - **`Student` tem query filter global (`!IsDeleted`) e é a ponta obrigatória** dos relacionamentos com `Enrollment` e `Payment`, que não têm filtro equivalente. O EF emite `PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning` no build: queries com join podem se comportar de forma inesperada para alunos soft-deleted.
 - **`IPaymentGatewayAdapter` fica no arquivo `Application/Interfaces/IPaymentGateway.cs`** — o nome do arquivo não bate com o da interface; procure pelo nome da interface, não do arquivo.
 - **Nenhum `IPaymentGatewayAdapter` é registrado em Production**: o `if (environment.IsProduction())` em `Infrastructure/DependencyInjection.cs` está vazio, e só o `SimulatedPaymentGatewayAdapter` é registrado fora de produção.

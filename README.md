@@ -242,13 +242,14 @@ sequenceDiagram
 
 ## 🧪 Suíte de Testes Automatizados
 
-A solução adota a cultura de qualidade estrita, contando com **204 testes automatizados (100% passing)** estruturados em 3 projetos de testes especializados:
+A solução adota a cultura de qualidade estrita, contando com **204 testes automatizados (100% passing)** estruturados em 4 projetos de testes especializados:
 
 ```
 📦 tests
  ┣ 📂 TechCurse.ArchitectureTests       (23 testes)  -> NetArchTest.Rules
- ┣ 📂 TechCurse.Application.UnitTests   (143 testes) -> Handlers, Validators, Specs
- ┗ 📂 TechCurse.Api.IntegrationTests    (38 testes)  -> WebApplicationFactory, Endpoints
+ ┣ 📂 TechCurse.Domain.UnitTests        (6 testes)   -> Entidades, Specifications
+ ┣ 📂 TechCurse.Application.UnitTests   (133 testes) -> Handlers, Validators
+ ┗ 📂 TechCurse.Api.IntegrationTests    (42 testes)  -> WebApplicationFactory, Endpoints, Persistência
 ```
 
 ### Como Executar os Testes
@@ -262,22 +263,26 @@ dotnet test --logger "console;verbosity=normal"
 
 ```mermaid
 pie title Distribuição dos 204 Testes Automatizados
-    "Unit Tests (Handlers / Validators / Specs)" : 143
-    "Integration Tests (E2E / Middlewares)" : 38
+    "Application Unit Tests (Handlers / Validators)" : 133
+    "Integration Tests (E2E / Middlewares / Persistência)" : 42
     "Architecture Tests (NetArchTest Rules)" : 23
+    "Domain Unit Tests (Entidades / Specifications)" : 6
 ```
 
 1. **Testes de Arquitetura (`TechCurse.ArchitectureTests` - 23 testes):**
    - Garante que a camada de `Domain` não possui dependências de `Application`, `Infrastructure` ou `API`.
    - Assegura que `Application` depende exclusivamente de `Domain`.
    - Valida convenções de nomenclatura para Handlers, Commands, Queries, Validators e Repositórios.
-2. **Testes Unitários (`TechCurse.Application.UnitTests` - 143 testes):**
+2. **Testes Unitários de Domínio (`TechCurse.Domain.UnitTests` - 6 testes):**
+   - Exercita entidades e especificações como `PaymentProcessableSpecification` sem mocks.
+   - Referencia exclusivamente `TechCurse.Domain`, o que mantém o isolamento da camada verificável no próprio grafo de dependências.
+3. **Testes Unitários de Aplicação (`TechCurse.Application.UnitTests` - 133 testes):**
    - Cobre 100% dos Handlers de Commands e Queries do MediatR com isolamento via `Moq`.
    - Valida todas as regras de validação do FluentValidation (entradas válidas, nulas, limites e formatos).
-   - Testa especificações de domínio como `PaymentProcessableSpecification`.
-3. **Testes de Integração (`TechCurse.Api.IntegrationTests` - 38 testes):**
+4. **Testes de Integração (`TechCurse.Api.IntegrationTests` - 42 testes):**
    - Executa fluxos ponta a ponta simulando requisições HTTP reais com `WebApplicationFactory`.
    - Valida pipeline de autenticação JWT, autorização RBAC, middlewares de exceção e idempotência.
+   - Cobre persistência direta no `TechCurseContext` em `Persistence/`.
 
 ---
 

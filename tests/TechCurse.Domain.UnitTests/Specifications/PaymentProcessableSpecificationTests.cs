@@ -4,7 +4,7 @@ using TechCurse.Domain.Enums;
 using TechCurse.Domain.Specifications;
 using Xunit;
 
-namespace TechCurse.Application.UnitTests.Specifications;
+namespace TechCurse.Domain.UnitTests.Specifications;
 
 public class PaymentProcessableSpecificationTests
 {
