@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Domain/TechCurse.Domain.csproj" />
+    <Project Path="src/Application/TechCurse.Application.csproj" />
+    <Project Path="src/Infrastructure/TechCurse.Infrastructure.csproj" />
+    <Project Path="src/Api/TechCurse.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TechCurse.Application.UnitTests/TechCurse.Application.UnitTests.csproj" />
+    <Project Path="tests/TechCurse.Api.IntegrationTests/TechCurse.Api.IntegrationTests.csproj" />
+    <Project Path="tests/TechCurse.ArchitectureTests/TechCurse.ArchitectureTests.csproj" />
+  </Folder>
+</Solution>

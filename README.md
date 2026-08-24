@@ -157,10 +157,10 @@ docker-compose up -d db redis seq
 dotnet restore
 
 # 3. Aplicar as Migrations do Entity Framework Core
-dotnet ef database update --project tech-curse/src/Infrastructure --startup-project tech-curse/src/API
+dotnet ef database update --project src/Infrastructure --startup-project src/Api
 
 # 4. Executar a API em modo de Desenvolvimento
-dotnet run --project tech-curse/src/API
+dotnet run --project src/Api
 ```
 
 A API estará acessível em:
@@ -245,10 +245,10 @@ sequenceDiagram
 A solução adota a cultura de qualidade estrita, contando com **204 testes automatizados (100% passing)** estruturados em 3 projetos de testes especializados:
 
 ```
-📦 tech-curse
- ┣ 📂 tech-curse.Test.Architecture   (23 testes)  -> NetArchTest.Rules
- ┣ 📂 tech-curse.Test.Unit           (143 testes) -> Handlers, Validators, Specs
- ┗ 📂 tech-curse.Test.Integration    (38 testes)  -> WebApplicationFactory, Endpoints
+📦 tests
+ ┣ 📂 TechCurse.ArchitectureTests       (23 testes)  -> NetArchTest.Rules
+ ┣ 📂 TechCurse.Application.UnitTests   (143 testes) -> Handlers, Validators, Specs
+ ┗ 📂 TechCurse.Api.IntegrationTests    (38 testes)  -> WebApplicationFactory, Endpoints
 ```
 
 ### Como Executar os Testes
@@ -267,15 +267,15 @@ pie title Distribuição dos 204 Testes Automatizados
     "Architecture Tests (NetArchTest Rules)" : 23
 ```
 
-1. **Testes de Arquitetura (`tech-curse.Test.Architecture` - 23 testes):**
+1. **Testes de Arquitetura (`TechCurse.ArchitectureTests` - 23 testes):**
    - Garante que a camada de `Domain` não possui dependências de `Application`, `Infrastructure` ou `API`.
    - Assegura que `Application` depende exclusivamente de `Domain`.
    - Valida convenções de nomenclatura para Handlers, Commands, Queries, Validators e Repositórios.
-2. **Testes Unitários (`tech-curse.Test.Unit` - 143 testes):**
+2. **Testes Unitários (`TechCurse.Application.UnitTests` - 143 testes):**
    - Cobre 100% dos Handlers de Commands e Queries do MediatR com isolamento via `Moq`.
    - Valida todas as regras de validação do FluentValidation (entradas válidas, nulas, limites e formatos).
    - Testa especificações de domínio como `PaymentProcessableSpecification`.
-3. **Testes de Integração (`tech-curse.Test.Integration` - 38 testes):**
+3. **Testes de Integração (`TechCurse.Api.IntegrationTests` - 38 testes):**
    - Executa fluxos ponta a ponta simulando requisições HTTP reais com `WebApplicationFactory`.
    - Valida pipeline de autenticação JWT, autorização RBAC, middlewares de exceção e idempotência.
 

@@ -25,17 +25,17 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore tech-curse.slnx
+        run: dotnet restore TechCurse.slnx
 
       - name: Build
-        run: dotnet build tech-curse.slnx --configuration Release --no-restore
+        run: dotnet build TechCurse.slnx --configuration Release --no-restore
 
       - name: Unit and Integration Tests
         # Executa os testes isolados e de integração presentes na sua solution
-        run: dotnet test tech-curse.slnx --configuration Release --no-build --verbosity normal
+        run: dotnet test TechCurse.slnx --configuration Release --no-build --verbosity normal
 
       - name: Publish Artifacts
-        run: dotnet publish tech-curse/src/API/tech-curse.API.csproj -c Release -o ./publish_output /p:UseAppHost=false
+        run: dotnet publish src/Api/TechCurse.Api.csproj -c Release -o ./publish_output /p:UseAppHost=false
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4

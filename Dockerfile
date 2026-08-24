@@ -14,27 +14,27 @@ ENV ASPNETCORE_HTTP_PORTS=8080 \
 # 2. BUILD STAGE (Compilação com Cache de NuGet)
 # ===================================================
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
+WORKDIR /build
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
 # Copia APENAS os projetos que compõem a aplicação (sem projetos de teste)
-COPY ["tech-curse/src/Domain/tech-curse.Domain.csproj", "tech-curse/src/Domain/"]
-COPY ["tech-curse/src/Application/tech-curse.Application.csproj", "tech-curse/src/Application/"]
-COPY ["tech-curse/src/Infrastructure/tech-curse.Infrastructure.csproj", "tech-curse/src/Infrastructure/"]
-COPY ["tech-curse/src/API/tech-curse.API.csproj", "tech-curse/src/API/"]
+COPY ["src/Domain/TechCurse.Domain.csproj", "src/Domain/"]
+COPY ["src/Application/TechCurse.Application.csproj", "src/Application/"]
+COPY ["src/Infrastructure/TechCurse.Infrastructure.csproj", "src/Infrastructure/"]
+COPY ["src/Api/TechCurse.Api.csproj", "src/Api/"]
 
 # Restaura dependências com Cache Mount do BuildKit
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore "tech-curse/src/API/tech-curse.API.csproj"
+    dotnet restore "src/Api/TechCurse.Api.csproj"
 
 # Copia todo o código-fonte
-COPY tech-curse/src/ tech-curse/src/
+COPY src/ src/
 
 # Publica a aplicação otimizada com ReadyToRun (R2R)
-WORKDIR "/src/tech-curse/src/API"
+WORKDIR "/build/src/Api"
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet publish "tech-curse.API.csproj" \
+    dotnet publish "TechCurse.Api.csproj" \
     -c Release \
     -o /app/publish \
     /p:UseAppHost=false \
@@ -46,4 +46,4 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "tech-curse.API.dll"]
+ENTRYPOINT ["dotnet", "TechCurse.Api.dll"]
