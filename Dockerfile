@@ -19,22 +19,22 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
 # Copia APENAS os projetos que compõem a aplicação (sem projetos de teste)
-COPY ["tech-curse-api/src/Domain/tech-curse-api.Domain.csproj", "tech-curse-api/src/Domain/"]
-COPY ["tech-curse-api/src/Application/tech-curse-api.Application.csproj", "tech-curse-api/src/Application/"]
-COPY ["tech-curse-api/src/Infrastructure/tech-curse-api.Infrastructure.csproj", "tech-curse-api/src/Infrastructure/"]
-COPY ["tech-curse-api/src/API/tech-curse-api.API.csproj", "tech-curse-api/src/API/"]
+COPY ["tech-curse/src/Domain/tech-curse.Domain.csproj", "tech-curse/src/Domain/"]
+COPY ["tech-curse/src/Application/tech-curse.Application.csproj", "tech-curse/src/Application/"]
+COPY ["tech-curse/src/Infrastructure/tech-curse.Infrastructure.csproj", "tech-curse/src/Infrastructure/"]
+COPY ["tech-curse/src/API/tech-curse.API.csproj", "tech-curse/src/API/"]
 
 # Restaura dependências com Cache Mount do BuildKit
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore "tech-curse-api/src/API/tech-curse-api.API.csproj"
+    dotnet restore "tech-curse/src/API/tech-curse.API.csproj"
 
 # Copia todo o código-fonte
-COPY tech-curse-api/src/ tech-curse-api/src/
+COPY tech-curse/src/ tech-curse/src/
 
 # Publica a aplicação otimizada com ReadyToRun (R2R)
-WORKDIR "/src/tech-curse-api/src/API"
+WORKDIR "/src/tech-curse/src/API"
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet publish "tech-curse-api.API.csproj" \
+    dotnet publish "tech-curse.API.csproj" \
     -c Release \
     -o /app/publish \
     /p:UseAppHost=false \
@@ -46,4 +46,4 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "tech-curse-api.API.dll"]
+ENTRYPOINT ["dotnet", "tech-curse.API.dll"]

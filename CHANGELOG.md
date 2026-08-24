@@ -51,9 +51,9 @@ Além disso, esta release consolida uma suíte robusta de **204 testes automatiz
 - Integração com Serilog e sink para Seq Dashboard (`http://localhost:9000`).
 
 #### 6. Suíte de 204 Testes Automatizados (100% Passing)
-- **Testes de Arquitetura (`tech-curse-api.Test.Architecture` - 23 testes):** Governança automatizada via NetArchTest para garantir a integridade das camadas da Clean Architecture (nenhuma dependência inversa para o Domain).
-- **Testes Unitários (`tech-curse-api.Test.Unit` - 143 testes):** Cobertura unitária exaustiva de todos os Handlers, Validators do FluentValidation e Domain Specifications com `Moq` e `FluentAssertions`.
-- **Testes de Integração (`tech-curse-api.Test.Integration` - 38 testes):** Testes de ponta a ponta com `WebApplicationFactory` cobrindo autenticação JWT, autorização RBAC, middlewares e persistência em memória.
+- **Testes de Arquitetura (`tech-curse.Test.Architecture` - 23 testes):** Governança automatizada via NetArchTest para garantir a integridade das camadas da Clean Architecture (nenhuma dependência inversa para o Domain).
+- **Testes Unitários (`tech-curse.Test.Unit` - 143 testes):** Cobertura unitária exaustiva de todos os Handlers, Validators do FluentValidation e Domain Specifications com `Moq` e `FluentAssertions`.
+- **Testes de Integração (`tech-curse.Test.Integration` - 38 testes):** Testes de ponta a ponta com `WebApplicationFactory` cobrindo autenticação JWT, autorização RBAC, middlewares e persistência em memória.
 
 ---
 
