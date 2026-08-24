@@ -95,8 +95,8 @@ flowchart TD
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/Liuizn/tech-curse-api.git
-cd tech-curse-api
+git clone https://github.com/Liuizn/tech-curse.git
+cd tech-curse
 
 # 2. Subir o ambiente com Docker Compose (SQL Server + Redis)
 docker-compose up -d

@@ -127,8 +127,8 @@ Suba toda a infraestrutura (SQL Server, Redis, Seq e API) com um único comando:
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/Liuizn/tech-curse-api.git
-cd tech-curse-api
+git clone https://github.com/Liuizn/tech-curse.git
+cd tech-curse
 
 # 2. Criar o arquivo de variáveis de ambiente a partir do exemplo
 cp .env.example .env
