@@ -7,34 +7,89 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
-## [Unreleased]
+## [2.0.0] - 2026-08-25
 
-### ♻️ Alterado
-- **Estrutura de pastas padronizada** para o layout convencional de Clean Architecture em .NET: `src/` e `tests/` na raiz do repositório, no estilo do template `dotnet new ca-sln`. A pasta `tech-curse/` intermediária foi eliminada e `src/API` passou a `src/Api`.
-- **Projetos e assemblies renomeados** de `tech-curse.*` para `TechCurse.*`, restabelecendo a regra `.csproj` = `AssemblyName` = `RootNamespace`. A solution passou de `tech-curse.slnx` para `TechCurse.slnx`, agora com solution folders espelhando o disco.
-- **Namespaces** `TechCurse.src.<Camada>` passaram a `TechCurse.<Camada>`; o segmento `src` era artefato de derivação por caminho. As migrations passaram de `TechCurse.Migrations` para `TechCurse.Infrastructure.Migrations`.
-- **Projetos de teste renomeados** para `TechCurse.ArchitectureTests`, `TechCurse.Application.UnitTests` e `TechCurse.Api.IntegrationTests`.
-- `PaymentPersistenceTests` (antigo `PaymentTests`) convertido de ISO-8859-1 para UTF-8, corrigindo os acentos dos comentários em pt-BR.
-- **Central Package Management**: todas as versões de pacote centralizadas em `Directory.Packages.props`; propriedades comuns em `Directory.Build.props` (raiz) e `tests/Directory.Build.props`. Os oito `.csproj` deixaram de repetir `TargetFramework`, `Nullable`, `ImplicitUsings` e versões.
-- **Pacotes atualizados**: stack Microsoft/EF Core para `10.0.11`, Serilog.AspNetCore `8.0.3`→`10.0.0`, Serilog.Sinks.Seq `8.0.0`→`9.1.0`, StackExchange.Redis `3.0.17`→`3.1.31`, Swashbuckle `6.6.2`→`10.2.3`, xUnit `2.5.3`→`2.9.3`, Test SDK `17.8.0`→`18.9.0`, coverlet `6.0.0`→`10.0.1`. MediatR permanece em `12.4.1` de propósito — a `13.0` passou a exigir licença comercial.
-- **`SwaggerDocumentationSetup` migrado para Microsoft.OpenApi 2.x** (exigido pelo Swashbuckle 10): namespace `Microsoft.OpenApi.Models` achatado para `Microsoft.OpenApi`, `OpenApiReference` substituído por `OpenApiSecuritySchemeReference` e `AddSecurityRequirement` agora recebe uma factory que recebe o `OpenApiDocument`.
-- **`BadRequestExecption` renomeada para `BadRequestException`**, corrigindo o typo em todos os pontos de uso.
-- `PaymentAPITest.cs` renomeado para `Contracts/PaymentsPagedResponseTests.cs` e `StubHttpMessageHandler.cs` movido para `Fixtures/` — o arquivo nunca exercitou endpoints, apenas o round-trip JSON do `PagedResultDto`.
+### 🌟 Resumo Executivo
 
-### ✨ Adicionado
-- **`TechCurse.Domain.UnitTests`** — quarto projeto de teste, com os 6 testes de entidades e Specifications que antes viviam no projeto de unitários de aplicação. Referencia exclusivamente `TechCurse.Domain`.
-- **`SwaggerDocumentTests`** — dois testes de integração que validam a geração do documento OpenAPI. A suíte não passava pelo Swagger, então quebras na configuração do Swashbuckle só apareciam ao abrir a UI.
-- `CustomWebApplicationFactory.EnvironmentName` virou virtual, permitindo exercitar trechos do pipeline que só existem fora do ambiente `Testing`.
+A **v2.0.0** consolida uma reestruturação completa do repositório e um endurecimento de segurança e de entrega. O código foi realinhado às convenções de mercado para Clean Architecture em .NET, três defeitos capazes de derrubar ou corromper produção foram corrigidos, e o pipeline foi reescrito para que uma imagem defeituosa não chegue mais ao registry.
+
+É uma **MAJOR** porque há quebras que exigem ação de quem consome a API: a rota `/health` deixou de existir, respostas `429` passaram a ser possíveis em qualquer endpoint, todos os refresh tokens em circulação foram invalidados e a imagem mudou de registry.
+
+A suíte foi de 206 para **229 testes**, e o build roda com **0 erros e 0 warnings**.
+
+---
+
+### ⚠️ Breaking Changes & Guia de Migração
+
+| Quebra | O que fazer |
+| :--- | :--- |
+| `GET /health` responde **404** | Use `/health/live` para liveness (não consulta dependências) ou `/health/ready` para readiness (agrega SQL Server e Redis) |
+| Detalhe de `/health/ready` restrito | O corpo detalhado por verificação agora exige JWT de role `Admin`. Chamadores anônimos recebem apenas `{"status":"..."}` — suficiente para sonda de orquestrador |
+| **`429 Too Many Requests`** é resposta nova | Trate o status e respeite o header `Retry-After`. Limites padrão: 200 req/min global, 10 req/min nos endpoints de autenticação |
+| **Refresh tokens invalidados** | Os valores gravados em texto puro não casam com o novo hash SHA-256. Todos os usuários precisam fazer login novamente após o deploy |
+| **Registry mudou** | `docker pull ghcr.io/liuizn/tech-curse:2.0.0` — a imagem não é mais publicada no Docker Hub |
+| **Produção não sobe sem gateway real** | `AddInfrastructure` lança `InvalidOperationException` quando `ASPNETCORE_ENVIRONMENT=Production`, porque só existe `SimulatedPaymentGatewayAdapter`. Implemente um adaptador real antes de subir em produção |
+| **Falha de migration derruba o startup** | O erro deixou de ser engolido. Garanta que o banco esteja acessível e migrável antes de subir a aplicação |
+| Assemblies e namespaces renomeados | `TechCurse.src.<Camada>` → `TechCurse.<Camada>`; assemblies `tech-curse.*` → `TechCurse.*` |
+
+---
 
 ### 🐛 Corrigido
-- **Gateway de pagamento não era registrado em Production**: o ramo `if (environment.IsProduction())` em `Infrastructure/DependencyInjection.cs` estava vazio, e qualquer endpoint de pagamento falharia na resolução da dependência.
-- **Divergência de versão do FluentValidation**: produção resolvia `11.10.0` (transitivo de `FluentValidation.DependencyInjectionExtensions`) enquanto os testes de validator rodavam contra `12.1.1`. Ambos agora em `12.1.1`.
-- **Versão flutuante** `Microsoft.AspNetCore.Mvc.Testing 10.0.0-*` fixada em `10.0.11`, tornando o build determinístico.
-- **Build limpo**: os 22 warnings (`CS8618`, `CS8602`, `CS8604`, `CS8601`, `NU1510`) e os 11 `xUnit1012` revelados pelos analyzers do xUnit 2.9 foram eliminados. `PagedResultDto<T>.Items` deixou de ser `IEnumerable<T?>` — um resultado paginado não contém itens nulos.
-- `TechCurse.Application.UnitTests` referenciava `TechCurse.Api` sem utilizá-lo e dependia de `TechCurse.Infrastructure` apenas por transitividade. Com os testes de persistência movidos para o projeto de integração, ambas as referências foram removidas.
-- `Dockerfile` passou a copiar `Directory.Build.props` e `Directory.Packages.props`, sem os quais o restore com CPM falharia na imagem.
 
-> Distribuição atual dos 206 testes: 23 arquitetura, 6 domínio, 133 aplicação, 44 integração. Build com **0 warnings e 0 erros**.
+- **Duas `NullReferenceException` vivas em produção.** `PaymentRepository.GetByIdAsync` e `GetByEnrollmentIdAsync` usavam `AsNoTracking()` sem `Include`, enquanto os handlers acessavam `payment.Student.IdentityUserId` e `.Enrollment.Student`. Sem lazy loading — `UseLazyLoadingProxies()` nunca é chamado e as navegações não são `virtual` — a navegação vinha `null`. Os testes unitários não pegavam porque mockam o repositório devolvendo a navegação preenchida à mão.
+- **Gateway simulado registrado em Production.** O ramo `if (environment.IsProduction())` registrava a mesma implementação do ramo `else`, fazendo a API confirmar cobranças que nunca aconteceram. Agora aborta o startup com mensagem explícita.
+- **Migrations falhando em silêncio.** O `catch` no `Program.cs` logava e seguia, deixando a API servindo requisições contra um banco sem schema.
+- **`InvariantGlobalization` incompatível com o SQL Server.** O `Microsoft.Data.SqlClient` lança `NotSupportedException: Globalization Invariant Mode is not supported` ao abrir conexão, derrubando o `Migrate()` e o health check `Database_SQLServer`. A propriedade voltou a `false` e a imagem runtime passou à variante chiseled `-extra`, que inclui o ICU.
+- **Duas regras de arquitetura passavam vazias.** `Commands_Should_Have_NameEndingWith_Command` e a equivalente de Queries ainda casavam o namespace `TechCurse\.src\.Application` numa regex; como não casavam nada, passavam sem verificar convenção alguma.
+- **Divergência de versão do FluentValidation**: produção resolvia `11.10.0` (transitivo) enquanto os testes de validator rodavam contra `12.1.1`.
+- **Versão flutuante** `Microsoft.AspNetCore.Mvc.Testing 10.0.0-*` fixada em `10.0.11`.
+- **Build limpo**: 22 warnings (`CS8618`, `CS8602`, `CS8604`, `CS8601`, `NU1510`) e 11 `xUnit1012` eliminados.
+- `TechCurse.Application.UnitTests` referenciava `TechCurse.Api` sem usar e dependia de `TechCurse.Infrastructure` só por transitividade.
+- `Dockerfile` passou a copiar `Directory.Build.props` e `Directory.Packages.props`, sem os quais o restore com CPM falha na imagem.
+- Badge e seção de licença do README diziam MIT contra um `LICENSE` Apache 2.0.
+
+### 🔐 Segurança
+
+- **Refresh token protegido.** Passou a ser persistido como **SHA-256** em `AspNetUserTokens`, com comparação em tempo constante via `CryptographicOperations.FixedTimeEquals` e expiração própria (`Jwt:RefreshTokenDays`, padrão 7 dias). Antes era gravado em texto puro e comparado com `!=`.
+- **Rate limiting HTTP.** Limiter global de 200 req/min particionado por usuário autenticado (ou por IP quando anônimo) e política dedicada de 10 req/min por IP nos endpoints de autenticação. Rejeição devolve `ProblemDetails` 429 com `Retry-After`.
+- **Data Protection persistido no banco.** O chaveiro ia para `/home/app/.aspnet` dentro do contêiner e sumia a cada recriação, invalidando cookies e tokens de reset. Agora vive na tabela `DataProtectionKeys`, com `SetApplicationName` fixo.
+- **`/health/ready` deixou de vazar detalhe de infraestrutura.** Mensagens de exceção com endereço e nome de servidor agora exigem role `Admin`.
+- **Credenciais de exemplo removidas do `.env.example`**, substituídas por placeholders.
+
+### ✨ Adicionado
+
+- **`TechCurse.Domain.UnitTests`** — quarto projeto de teste, com os testes de entidades e Specifications que viviam no projeto de unitários de aplicação. Referencia exclusivamente `TechCurse.Domain`.
+- **23 testes novos**, cobrindo o que nunca era exercitado: navegações de pagamento com aluno ativo e soft-deleted, liveness e readiness com corte por role, rate limiting, persistência do chaveiro de Data Protection, montagem do container em Production, recusa de subir com banco inalcançável, e **drift entre modelo e migrations** (`HasPendingModelChanges`) — as migrations nunca haviam sido exercitadas, porque o provider InMemory monta o schema a partir do modelo.
+- **Separação de liveness e readiness** com tags (`HealthCheckTags.Ready`).
+- **`docker-compose.ci.yml`** — override de pipeline que valida a imagem já construída, sem reconstruir, e sem expor portas de infraestrutura no runner.
+- **Versionamento SemVer 2.0.0** declarado em `Directory.Build.props` e propagado ao Swagger e às tags da imagem.
+- `SwaggerDocumentTests` e `CustomWebApplicationFactory.EnvironmentName` virtual.
+
+### ♻️ Alterado
+
+- **Estrutura de pastas padronizada**: `src/` e `tests/` na raiz, no estilo do template `dotnet new ca-sln`. A pasta `tech-curse/` intermediária foi eliminada e `src/API` passou a `src/Api`.
+- **Projetos e assemblies renomeados** de `tech-curse.*` para `TechCurse.*`, restabelecendo `.csproj` = `AssemblyName` = `RootNamespace`. Solution passou a `TechCurse.slnx`, com solution folders espelhando o disco.
+- **Namespaces** `TechCurse.src.<Camada>` → `TechCurse.<Camada>`; migrations de `TechCurse.Migrations` → `TechCurse.Infrastructure.Migrations`.
+- **Central Package Management**: versões centralizadas em `Directory.Packages.props`, propriedades comuns em `Directory.Build.props` e `tests/Directory.Build.props`.
+- **Pacotes atualizados**: stack Microsoft/EF Core para `10.0.11`, Serilog.AspNetCore `8.0.3`→`10.0.0`, Serilog.Sinks.Seq `8.0.0`→`9.1.0`, StackExchange.Redis `3.0.17`→`3.1.31`, Swashbuckle `6.6.2`→`10.2.3`, xUnit `2.5.3`→`2.9.3`, Test SDK `17.8.0`→`18.9.0`, coverlet `6.0.0`→`10.0.1`. MediatR permanece em `12.4.1` de propósito — a `13.0` passou a exigir licença comercial.
+- **`SwaggerDocumentationSetup` migrado para Microsoft.OpenApi 2.x**: namespace `Microsoft.OpenApi.Models` achatado, `OpenApiReference` substituído por `OpenApiSecuritySchemeReference`.
+- **`BadRequestExecption` renomeada para `BadRequestException`**.
+- **Soft delete**: decisão tomada de preservar o histórico financeiro — consultas de `Payment` que atravessam a navegação usam `IgnoreQueryFilters()`.
+- **Todos os comentários removidos do código-fonte**, em `.cs` e nos arquivos de infraestrutura. A justificativa de cada decisão vive no `CLAUDE.md` e nas mensagens de commit.
+- `.editorconfig` adicionado; `dotnet format --verify-no-changes` passa limpo.
+- `PaymentPersistenceTests` convertido de ISO-8859-1 para UTF-8.
+
+### 🚀 CI/CD
+
+- **A ordem foi invertida para build → smoke test → push.** O login no registry acontece depois do teste, então imagem que não sobe nunca chega ao GHCR. Antes, toda execução publicava em `:latest` mesmo falhando.
+- **Migração do Docker Hub para o GitHub Container Registry**, eliminando dois segredos de registry — o `GITHUB_TOKEN` embutido basta.
+- **Tags de imagem por versão e por commit** (`2.0.0`, `2.0`, `2`, `sha-<commit>`) além de `latest`, viabilizando rollback e rastreabilidade.
+- **Diagnóstico em caso de falha**: logs de `api`, `db` e `redis` são despejados quando o smoke test quebra. Foi o que permitiu diagnosticar o bug de globalização depois de cinco execuções vermelhas sem pista.
+- **Espera por tentativas** no lugar de `sleep 20` fixo; a API costuma responder em ~10s.
+- Cache de NuGet e de camadas Docker, `permissions` de menor privilégio, `concurrency` com cancelamento, publicação de resultados de teste e cobertura, e auditoria de pacotes vulneráveis.
+- **Imagem chiseled com digest pinado** e labels OCI ligando o pacote ao repositório.
+
+> Distribuição dos 229 testes: 23 arquitetura, 6 domínio, 133 aplicação, 67 integração.
 
 ---
 

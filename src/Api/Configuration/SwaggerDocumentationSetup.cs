@@ -13,7 +13,7 @@ public static class SwaggerDocumentationSetup
             c.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "Tech Curse API",
-                Version = "v1",
+                Version = "2.0.0",
                 Description = "API para gestão de cursos e alunos baseada em Clean Architecture."
             });
 

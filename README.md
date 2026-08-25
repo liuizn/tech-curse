@@ -1,6 +1,7 @@
 # 🎓 Tech Curse API
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Version-2.0.0-informational?style=for-the-badge" alt="Version 2.0.0" />
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Architecture-Clean%20Architecture%20%7C%20CQRS-239120?style=for-the-badge&logo=c-sharp&logoColor=white" alt="Clean Architecture & CQRS" />
   <img src="https://img.shields.io/badge/MediatR-Pipeline%20Behaviors-34495E?style=for-the-badge" alt="MediatR" />
@@ -328,7 +329,7 @@ A ordem importa: **a imagem só chega ao registry depois de provar que sobe**. E
 docker pull ghcr.io/liuizn/tech-curse:latest
 ```
 
-Cada execução publica duas tags: `latest` e `sha-<commit>`. A tag com o SHA é o que viabiliza rollback e rastreabilidade — `latest` é sobrescrita, o SHA não.
+Um push na `main` publica `latest` e `sha-<commit>`. Uma tag do git no formato `v*.*.*` publica também `2.0.0`, `2.0` e `2`. As tags de versão e de SHA são o que viabiliza rollback e rastreabilidade — `latest` é sobrescrita, elas não.
 
 A imagem usa a variante **chiseled** do runtime .NET (sem shell, sem gerenciador de pacotes, executando como usuário não-root), com as imagens base pinadas por digest para builds reproduzíveis.
 

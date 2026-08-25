@@ -3,11 +3,10 @@ name: CI/CD Pipeline - Tech Curse API
 on:
   push:
     branches: ["main"]
+    tags: ["v*.*.*"]
   pull_request:
     branches: ["main"]
 
-# Permissao padrao do workflow: so leitura. O job que publica no GHCR
-# eleva a permissao localmente (packages: write).
 permissions:
   contents: read
 
@@ -23,9 +22,6 @@ env:
   LOCAL_IMAGE: tech-curse-api:ci
 
 jobs:
-  # ============================================================
-  # JOB 1 — Build, testes e artefato de publicacao
-  # ============================================================
   build-and-test:
     name: Build, Tests and Publish
     runs-on: ubuntu-latest
@@ -94,25 +90,16 @@ jobs:
           path: ./publish_output
           retention-days: 14
 
-  # ============================================================
-  # JOB 2 — Imagem Docker: build, smoke test e SO ENTAO publish
-  # ============================================================
   docker:
     name: Docker Build, Smoke Test and Push
     needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
 
-    # Eleva a permissao apenas aqui. O GITHUB_TOKEN embutido substitui
-    # DOCKERHUB_USERNAME e DOCKERHUB_TOKEN: nao ha mais segredo de registry
-    # para gerenciar ou rotacionar.
     permissions:
       contents: read
       packages: write
 
-    # Definido no job, e nao passo a passo: os tres comandos de compose (up,
-    # logs, down) precisam da mesma interpolacao. Sem isso o docker compose
-    # emite "variable is not set" e polui justamente o log de diagnostico.
     env:
       API_IMAGE: tech-curse-api:ci
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -129,9 +116,6 @@ jobs:
       - name: Configurar Buildx
         uses: docker/setup-buildx-action@v3
 
-      # O GHCR exige o nome da imagem inteiramente em minusculas, e o dono
-      # deste repositorio e "Liuizn" (com maiuscula). Sem esta normalizacao
-      # o push falha com "invalid reference format".
       - name: Normalizar nome da imagem
         id: img
         run: |
@@ -143,6 +127,9 @@ jobs:
         with:
           images: ${{ steps.img.outputs.name }}
           tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=sha,format=long
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
@@ -157,7 +144,6 @@ jobs:
           push: false
           tags: ${{ env.LOCAL_IMAGE }}
           labels: ${{ steps.meta.outputs.labels }}
-          # O LABEL do Dockerfile tem "unknown" como padrao; aqui vai o SHA real.
           build-args: |
             GIT_REVISION=${{ github.sha }}
           cache-from: type=gha
@@ -166,9 +152,6 @@ jobs:
       - name: Subir a stack para o smoke test
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
 
-      # /health/ready (e nao /health/live): o smoke test quer saber se a API
-      # consegue atender trafego, o que inclui SQL Server e Redis. O liveness
-      # responderia 200 com o banco fora do ar e o teste passaria em falso.
       - name: Aguardar a API ficar saudavel
         run: |
           echo "Sondando /health/ready (ate 150s)..."
@@ -183,7 +166,7 @@ jobs:
           echo "A API nao ficou pronta dentro do limite."
           echo "Liveness (o processo chegou a subir?):"
           curl -sS -i http://localhost:8080/health/live || true
-          echo "Resposta de /health/ready (com o detalhe por verificacao):"
+          echo "Resposta de /health/ready:"
           curl -sS -i http://localhost:8080/health/ready || true
           exit 1
 
@@ -204,8 +187,6 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v
 
-      # Login no GHCR com o token embutido do proprio workflow.
-      # github.actor e quem disparou a execucao; o token tem escopo do repo.
       - name: Login no GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -213,8 +194,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # tag + push (em vez de rebuildar com push: true) garante que os bits
-      # publicados sao exatamente os que passaram no smoke test.
       - name: Publicar a imagem validada
         run: |
           echo "${{ steps.meta.outputs.tags }}" | while read -r tag; do

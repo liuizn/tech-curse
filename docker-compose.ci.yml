@@ -1,16 +1,5 @@
-# Override aplicado apenas no pipeline:
-#   docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
-#
-# Objetivo: validar a imagem exata que acabou de ser construida, sem
-# reconstruir nada e sem expor portas de infraestrutura no runner.
-#
-# Requer Docker Compose 2.24+ por causa da tag !reset (os runners do GitHub
-# ja atendem). Sem ela, "ports: []" NAO remove as portas do arquivo base —
-# listas sao mescladas, nao substituidas.
-
 services:
   db:
-    # No CI ninguem conecta no SQL Server de fora do bridge network.
     ports: !reset []
     deploy:
       resources:
@@ -32,12 +21,8 @@ services:
           memory: 512M
 
   api:
-    # API_IMAGE e definido pelo workflow com a tag local carregada via
-    # "load: true". pull_policy never garante que o compose use essa imagem
-    # e nao tente buscar no registry nem reconstruir.
     image: ${API_IMAGE}
     pull_policy: never
-    # A unica porta que o smoke test precisa alcancar.
     ports:
       - "8080:8080"
     restart: "no"

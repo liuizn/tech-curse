@@ -5,17 +5,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
-  <!--
-    Versoes de TODOS os pacotes da solution ficam aqui. Os .csproj declaram apenas
-    <PackageReference Include="..." /> sem Version, o que impede que dois projetos
-    resolvam versoes diferentes do mesmo pacote.
-  -->
-
   <ItemGroup Label="Aplicacao">
-    <!--
-      MediatR permanece na 12.4.1 de proposito: a partir da 13.0 o pacote passou a
-      exigir licenca comercial paga. Bump so com decisao de negocio.
-    -->
     <PackageVersion Include="MediatR" Version="12.4.1" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
@@ -34,10 +24,6 @@
 
   <ItemGroup Label="Identidade e seguranca">
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
-    <!--
-      Chaveiro do DataProtection persistido no banco. Sem isto o ASP.NET grava as
-      chaves em ~/.aspnet/DataProtection-Keys dentro do container, que e efemero.
-    -->
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.11" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Identity.Core" Version="10.0.11" />
