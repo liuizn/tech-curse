@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using TechCurse.Api.Configuration;
 using TechCurse.Api.Middleware;
@@ -44,7 +45,30 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+// O writer padrão responde apenas "Healthy"/"Unhealthy" em texto puro, sem dizer
+// qual verificação falhou. Detalhar por check é o que torna um 503 diagnosticável
+// no pipeline, onde só se enxerga a resposta HTTP.
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json; charset=utf-8";
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = report.Status.ToString(),
+            duracaoMs = report.TotalDuration.TotalMilliseconds,
+            checks = report.Entries.Select(entry => new
+            {
+                nome = entry.Key,
+                status = entry.Value.Status.ToString(),
+                duracaoMs = entry.Value.Duration.TotalMilliseconds,
+                descricao = entry.Value.Description,
+                erro = entry.Value.Exception?.Message
+            })
+        });
+    }
+});
 
 // Seção de Seed de Dados
 using (var scope = app.Services.CreateScope())

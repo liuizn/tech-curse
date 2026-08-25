@@ -1,4 +1,4 @@
-version: '3.8'
+# "version" removido: e obsoleto no Compose V2, que emite warning ao encontra-lo.
 
 services:
   db:
@@ -43,8 +43,15 @@ services:
       - "5341:5341"
     volumes:
       - seq_data:/data
+    # Sem healthcheck de proposito: a API nao depende do Seq para subir (o sink
+    # do Serilog bufferiza e nao bloqueia o startup), e um healthcheck mal
+    # calibrado aqui impediria a API de iniciar em vez de apenas degradar o log.
 
   api:
+    # Nomear a imagem e o que permite ao CI validar e publicar o MESMO
+    # artefato. Sem isto, "docker compose up" reconstroi do zero e o smoke
+    # test acaba validando uma recompilacao, nao a imagem que vai ao registry.
+    image: ${API_IMAGE:-tech-curse-api:local}
     build:
       context: .
       dockerfile: Dockerfile
@@ -52,7 +59,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      # Parametrizado: este arquivo tambem e o artefato usado pelo CI, e rodar
+      # tudo em Development liga Swagger, pagina de excecao detalhada e o ramo
+      # nao-produtivo do container de DI.
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
       - Jwt__SigningKey=${JWT_SIGNING_KEY}
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}
