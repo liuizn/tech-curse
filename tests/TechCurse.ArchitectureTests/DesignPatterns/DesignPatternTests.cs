@@ -11,7 +11,6 @@ public class DesignPatternTests
     [Fact]
     public void Handlers_Should_ResideIn_Application_Features()
     {
-        // Act
         var result = Types.InAssembly(ArchitectureConstants.ApplicationAssembly)
             .That()
             .ImplementInterface(typeof(IRequestHandler<,>))
@@ -21,7 +20,6 @@ public class DesignPatternTests
             .ResideInNamespaceStartingWith("TechCurse.Application.Features")
             .GetResult();
 
-        // Assert
         result.IsSuccessful.Should().BeTrue(
             $"All MediatR handlers must reside in Application.Features namespaces. Failing types: {string.Join(", ", result.FailingTypeNames ?? Array.Empty<string>())}");
     }
@@ -29,7 +27,6 @@ public class DesignPatternTests
     [Fact]
     public void Validators_Should_ResideIn_Application_Features()
     {
-        // Act
         var result = Types.InAssembly(ArchitectureConstants.ApplicationAssembly)
             .That()
             .Inherit(typeof(AbstractValidator<>))
@@ -37,7 +34,6 @@ public class DesignPatternTests
             .ResideInNamespaceStartingWith("TechCurse.Application.Features")
             .GetResult();
 
-        // Assert
         result.IsSuccessful.Should().BeTrue(
             $"All FluentValidation validators must reside in Application.Features namespaces. Failing types: {string.Join(", ", result.FailingTypeNames ?? Array.Empty<string>())}");
     }
@@ -45,7 +41,6 @@ public class DesignPatternTests
     [Fact]
     public void RepositoryImplementations_Should_ResideIn_Infrastructure_Repositories()
     {
-        // Act
         var result = Types.InAssembly(ArchitectureConstants.InfrastructureAssembly)
             .That()
             .HaveNameEndingWith("Repository")
@@ -55,7 +50,6 @@ public class DesignPatternTests
             .ResideInNamespace("TechCurse.Infrastructure.Repositories")
             .GetResult();
 
-        // Assert
         result.IsSuccessful.Should().BeTrue(
             $"All repository implementations must reside in Infrastructure.Repositories namespace. Failing types: {string.Join(", ", result.FailingTypeNames ?? Array.Empty<string>())}");
     }
@@ -63,7 +57,6 @@ public class DesignPatternTests
     [Fact]
     public void Controllers_Should_ResideIn_API_Controllers()
     {
-        // Act
         var result = Types.InAssembly(ArchitectureConstants.ApiAssembly)
             .That()
             .HaveNameEndingWith("Controller")
@@ -73,7 +66,6 @@ public class DesignPatternTests
             .ResideInNamespace("TechCurse.Api.Controllers")
             .GetResult();
 
-        // Assert
         result.IsSuccessful.Should().BeTrue(
             $"All controllers must reside in API.Controllers namespace. Failing types: {string.Join(", ", result.FailingTypeNames ?? Array.Empty<string>())}");
     }

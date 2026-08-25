@@ -27,17 +27,13 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.CreatedAt)
                .IsRequired();
 
-        // Indexes for common queries
         builder.HasIndex(p => p.StudentId);
         builder.HasIndex(p => p.Status);
 
-        // Unique active payment per enrollment. Uses a filtered index (SQL Server syntax).
-        // This ensures there is at most one payment marked as active for a given enrollment.
         builder.HasIndex(p => p.EnrollmentId)
                .IsUnique()
                .HasFilter("[IsActive] = 1");
 
-        // Foreign keys
         builder.HasOne(p => p.Enrollment)
                .WithMany()
                .HasForeignKey(p => p.EnrollmentId)

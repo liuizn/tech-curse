@@ -18,13 +18,10 @@ public class CorrelationIdMiddlewareTests : IClassFixture<CustomWebApplicationFa
     [Trait("Category", "Integration")]
     public async Task Request_WhenNoCorrelationIdHeaderSent_ShouldGenerateAndReturnCorrelationId()
     {
-        // Arrange
         var client = _factory.CreateAnonymousClient();
 
-        // Act
         var response = await client.GetAsync("/health/live");
 
-        // Assert
         response.Headers.Should().ContainKey("X-Correlation-ID");
         var correlationId = response.Headers.GetValues("X-Correlation-ID").FirstOrDefault();
         correlationId.Should().NotBeNullOrWhiteSpace();
@@ -34,15 +31,12 @@ public class CorrelationIdMiddlewareTests : IClassFixture<CustomWebApplicationFa
     [Trait("Category", "Integration")]
     public async Task Request_WhenCorrelationIdHeaderSent_ShouldPreserveAndReturnSameCorrelationId()
     {
-        // Arrange
         var client = _factory.CreateAnonymousClient();
         var customCorrelationId = "custom-correlation-id-987654";
         client.DefaultRequestHeaders.Add("X-Correlation-ID", customCorrelationId);
 
-        // Act
         var response = await client.GetAsync("/health/live");
 
-        // Assert
         response.Headers.Should().ContainKey("X-Correlation-ID");
         var returnedId = response.Headers.GetValues("X-Correlation-ID").FirstOrDefault();
         returnedId.Should().Be(customCorrelationId);

@@ -22,12 +22,6 @@ namespace TechCurse.Infrastructure
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ICacheService, RedisCacheService>();
 
-            // O projeto ainda não tem nenhum adaptador de gateway de pagamento real: a única
-            // implementação de IPaymentGatewayAdapter é o SimulatedPaymentGatewayAdapter, que
-            // devolve respostas fabricadas e não cobra ninguém de verdade. Registrá-lo em
-            // Produção faria a API confirmar pagamentos que nunca aconteceram — uma falha
-            // silenciosa, o pior desfecho possível num fluxo financeiro. Enquanto o gateway
-            // real não existir, é preferível derrubar o startup de forma ruidosa.
             if (environment.IsProduction())
             {
                 throw new InvalidOperationException(

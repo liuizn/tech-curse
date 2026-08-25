@@ -23,7 +23,6 @@ public class GetStudentsQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCacheHit_ShouldReturnCachedResult()
     {
-        // Arrange
         var searchParams = new PaginationParamsDto { PageNumber = 1, PageSize = 10, SortBy = "Id", SortDirection = "ASC" };
         var query = new GetStudentsQuery(searchParams);
 
@@ -35,10 +34,8 @@ public class GetStudentsQueryHandlerTests
         _cacheServiceMock.Setup(c => c.GetAsync<PagedResultDto<StudentOutputDto>>(It.IsAny<string>()))
             .ReturnsAsync(cachedResult);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().Be(cachedResult);
         _studentRepositoryMock.Verify(r => r.GetPagedAsync(It.IsAny<PaginationParamsDto>()), Times.Never);
     }
@@ -47,7 +44,6 @@ public class GetStudentsQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCacheMiss_ShouldFetchFromRepositoryAndCache()
     {
-        // Arrange
         var searchParams = new PaginationParamsDto { PageNumber = 1, PageSize = 10, SortBy = "Id", SortDirection = "ASC" };
         var query = new GetStudentsQuery(searchParams);
 
@@ -62,10 +58,8 @@ public class GetStudentsQueryHandlerTests
         _studentRepositoryMock.Setup(r => r.GetPagedAsync(searchParams))
             .ReturnsAsync((students, 1));
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.TotalCount.Should().Be(1);
         result.Items.Should().HaveCount(1);

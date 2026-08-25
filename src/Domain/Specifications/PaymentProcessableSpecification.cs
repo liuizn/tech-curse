@@ -12,7 +12,6 @@ public class PaymentProcessableSpecification : ISpecification<Entities.Payment>
 
     public bool IsSatisfiedBy(Entities.Payment payment)
     {
-        // Regras: Precisa estar ativo e com status Pendente
         return payment.IsActive && payment.Status == Enums.PaymentStatus.Pending;
     }
 }

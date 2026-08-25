@@ -32,16 +32,13 @@ public class GetPaymentsByStudentIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentNotFound_ShouldThrowNotFoundException()
     {
-        // Arrange
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Student?)null);
 
         var query = new GetPaymentsByStudentIdQuery(1, new PaginationParamsDto());
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Estudante não encontrado.");
     }
@@ -50,7 +47,6 @@ public class GetPaymentsByStudentIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenNonAdminAndMismatchUser_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var student = new Student { StudentId = 1, IdentityUserId = "user-real" };
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(student);
 
@@ -59,10 +55,8 @@ public class GetPaymentsByStudentIdQueryHandlerTests
 
         var query = new GetPaymentsByStudentIdQuery(1, new PaginationParamsDto());
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Você não possuí permissão suficiente para acessar este registro!");
     }
@@ -71,7 +65,6 @@ public class GetPaymentsByStudentIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCacheHit_ShouldReturnCachedPayments()
     {
-        // Arrange
         var student = new Student { StudentId = 1, IdentityUserId = "user-real" };
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(student);
 
@@ -88,10 +81,8 @@ public class GetPaymentsByStudentIdQueryHandlerTests
 
         var query = new GetPaymentsByStudentIdQuery(1, new PaginationParamsDto { PageNumber = 1, PageSize = 10 });
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().Be(cachedResult);
     }
 }

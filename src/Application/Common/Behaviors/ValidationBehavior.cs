@@ -23,7 +23,6 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 
             if (failures.Count != 0)
             {
-                // Mapeia os erros do FluentValidation para o dicionário esperado pela Exceção de Domínio
                 var errorsDictionary = failures
                     .GroupBy(x => x.PropertyName, x => x.ErrorMessage)
                     .ToDictionary(failureGroup => failureGroup.Key, failureGroup => failureGroup.ToArray());

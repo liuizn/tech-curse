@@ -30,16 +30,13 @@ public class GetPaymentByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenPaymentNotFound_ShouldThrowNotFoundException()
     {
-        // Arrange
         _paymentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Payment?)null);
 
         var query = new GetPaymentByIdQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Pagamento não encontrado.");
     }
@@ -48,7 +45,6 @@ public class GetPaymentByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenNonAdminAndMismatchedUser_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -63,10 +59,8 @@ public class GetPaymentByIdQueryHandlerTests
 
         var query = new GetPaymentByIdQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Você não possuí permissão suficiente para acessar este registro!");
     }
@@ -75,7 +69,6 @@ public class GetPaymentByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCacheHit_ShouldReturnCachedDto()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -94,10 +87,8 @@ public class GetPaymentByIdQueryHandlerTests
 
         var query = new GetPaymentByIdQuery(1);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().Be(cachedDto);
     }
 
@@ -105,7 +96,6 @@ public class GetPaymentByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCacheMissAndAdmin_ShouldReturnPaymentAndSetCache()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -129,10 +119,8 @@ public class GetPaymentByIdQueryHandlerTests
 
         var query = new GetPaymentByIdQuery(1);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.PaymentId.Should().Be(1);
         result.Amount.Should().Be(100m);

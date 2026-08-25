@@ -22,14 +22,11 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Trait("Category", "Integration")]
     public async Task Post_WhenUnauthenticated_ShouldReturn401Unauthorized()
     {
-        // Arrange
         var client = _factory.CreateAnonymousClient();
         var input = new EnrollmentInputDto(1, 1);
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Enrollment", input);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -37,14 +34,11 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Trait("Category", "Integration")]
     public async Task Post_WhenPayloadIsInvalid_ShouldReturn422UnprocessableEntity()
     {
-        // Arrange: Admin client sending 0 for IDs triggers FluentValidation
         var client = _factory.CreateAdminClient();
         var invalidInput = new EnrollmentInputDto(0, 0);
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Enrollment", invalidInput);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
@@ -52,7 +46,6 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Trait("Category", "Integration")]
     public async Task Post_WhenCourseNotFound_ShouldReturn404NotFound()
     {
-        // Arrange
         var studentEmail = $"student_nf_{Guid.NewGuid():N}@techcurse.com";
         var studentId = $"student-guid-{Guid.NewGuid():N}";
         var client = _factory.CreateStudentClient(studentEmail, studentId);
@@ -75,13 +68,10 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
             dbStudentId = student.StudentId;
         });
 
-        // CourseId = 99999 (not found)
         var input = new EnrollmentInputDto(99999, dbStudentId);
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Enrollment", input);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -89,7 +79,6 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Trait("Category", "Integration")]
     public async Task Post_WhenValid_ShouldReturn202Accepted()
     {
-        // Arrange
         var studentEmail = $"student_val_{Guid.NewGuid():N}@techcurse.com";
         var studentId = $"student-guid-{Guid.NewGuid():N}";
         var client = _factory.CreateStudentClient(studentEmail, studentId);
@@ -127,10 +116,8 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
 
         var input = new EnrollmentInputDto(courseId, dbStudentId);
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Enrollment", input);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
     }
 
@@ -138,7 +125,6 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
     [Trait("Category", "Integration")]
     public async Task Post_WhenAlreadyEnrolled_ShouldReturn409Conflict()
     {
-        // Arrange
         var studentEmail = $"student_cnf_{Guid.NewGuid():N}@techcurse.com";
         var studentId = $"student-guid-{Guid.NewGuid():N}";
         var client = _factory.CreateStudentClient(studentEmail, studentId);
@@ -185,10 +171,8 @@ public class EnrollmentsEndpointsTests : IClassFixture<CustomWebApplicationFacto
 
         var input = new EnrollmentInputDto(courseId, dbStudentId);
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Enrollment", input);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 }

@@ -9,7 +9,6 @@ public static class DbInitializer
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        // Roles
         string[] roles = { "Admin", "Instructor", "Student" };
 
         foreach (var roleName in roles)

@@ -6,7 +6,6 @@ public class Payment
 {
     public int PaymentId { get; set; }
 
-    // Relations
     public int EnrollmentId { get; set; }
     public Enrollment Enrollment { get; set; } = null!;
 

@@ -30,16 +30,13 @@ public class GetPaymentsByEnrollmentIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenEnrollmentHasNoPaymentsOrNoStudent_ShouldThrowNotFoundException()
     {
-        // Arrange
         _paymentRepositoryMock.Setup(r => r.GetByEnrollmentIdAsync(1))
             .ReturnsAsync(new List<Payment>());
 
         var query = new GetPaymentsByEnrollmentIdQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Matrícula não encontrada ou sem estudante associado.");
     }
@@ -48,7 +45,6 @@ public class GetPaymentsByEnrollmentIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenNonAdminAndMismatchUser_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var payments = new List<Payment>
         {
             new()
@@ -69,10 +65,8 @@ public class GetPaymentsByEnrollmentIdQueryHandlerTests
 
         var query = new GetPaymentsByEnrollmentIdQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Você não possuí permissão suficiente para acessar este registro!");
     }
@@ -81,7 +75,6 @@ public class GetPaymentsByEnrollmentIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValidAndCacheHit_ShouldReturnCachedPayments()
     {
-        // Arrange
         var payments = new List<Payment>
         {
             new()
@@ -110,10 +103,8 @@ public class GetPaymentsByEnrollmentIdQueryHandlerTests
 
         var query = new GetPaymentsByEnrollmentIdQuery(1);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().BeEquivalentTo(cachedDtos);
     }
 }

@@ -25,16 +25,13 @@ public class GetStudentEnrollmentsQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentNotFoundOrDeleted_ShouldThrowNotFoundException()
     {
-        // Arrange
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Student?)null);
 
         var query = new GetStudentEnrollmentsQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Estudante não encontrado.");
     }
@@ -43,7 +40,6 @@ public class GetStudentEnrollmentsQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenNonAdminAndMismatchUser_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var student = new Student { StudentId = 1, IdentityUserId = "user-real", IsDeleted = false };
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(student);
 
@@ -52,10 +48,8 @@ public class GetStudentEnrollmentsQueryHandlerTests
 
         var query = new GetStudentEnrollmentsQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Você não possui permissão suficiente para acessar este registro.");
     }
@@ -64,7 +58,6 @@ public class GetStudentEnrollmentsQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValid_ShouldReturnEnrollments()
     {
-        // Arrange
         var student = new Student { StudentId = 1, IdentityUserId = "user-1", IsDeleted = false };
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(student);
 
@@ -81,10 +74,8 @@ public class GetStudentEnrollmentsQueryHandlerTests
 
         var query = new GetStudentEnrollmentsQuery(1);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().BeEquivalentTo(coursesList);
     }
 }

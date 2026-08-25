@@ -23,17 +23,14 @@ public class GetSelfStudentQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentNotFoundOrDeleted_ShouldThrowNotFoundException()
     {
-        // Arrange
         _currentUserServiceMock.Setup(u => u.GetUserEmail()).Returns("student@example.com");
         _studentRepositoryMock.Setup(r => r.GetByEmailAsync("student@example.com"))
             .ReturnsAsync((Student?)null);
 
         var query = new GetSelfStudentQuery();
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Perfil de estudante não encontrado ou inativo.");
     }
@@ -42,7 +39,6 @@ public class GetSelfStudentQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentExists_ShouldReturnStudentDto()
     {
-        // Arrange
         var student = new Student
         {
             StudentId = 1,
@@ -58,10 +54,8 @@ public class GetSelfStudentQueryHandlerTests
 
         var query = new GetSelfStudentQuery();
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.Id.Should().Be(1);
         result.Nome.Should().Be("Carlos");

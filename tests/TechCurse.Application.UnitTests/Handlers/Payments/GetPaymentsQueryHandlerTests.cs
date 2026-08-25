@@ -24,7 +24,6 @@ public class GetPaymentsQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCacheHit_ShouldReturnCachedResult()
     {
-        // Arrange
         var searchParams = new PaginationParamsDto { PageNumber = 1, PageSize = 10, SortBy = "Id", SortDirection = "ASC" };
         var query = new GetPaymentsQuery(searchParams);
 
@@ -36,10 +35,8 @@ public class GetPaymentsQueryHandlerTests
         _cacheServiceMock.Setup(c => c.GetAsync<PagedResultDto<PaymentOutputDto>>(It.IsAny<string>()))
             .ReturnsAsync(cachedResult);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().Be(cachedResult);
         _paymentRepositoryMock.Verify(r => r.GetPagedAsync(It.IsAny<PaginationParamsDto>()), Times.Never);
     }
@@ -48,7 +45,6 @@ public class GetPaymentsQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCacheMiss_ShouldFetchFromRepositoryAndCache()
     {
-        // Arrange
         var searchParams = new PaginationParamsDto { PageNumber = 1, PageSize = 10, SortBy = "Id", SortDirection = "ASC" };
         var query = new GetPaymentsQuery(searchParams);
 
@@ -63,10 +59,8 @@ public class GetPaymentsQueryHandlerTests
         _paymentRepositoryMock.Setup(r => r.GetPagedAsync(searchParams))
             .ReturnsAsync((payments, 1));
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.TotalCount.Should().Be(1);
         result.Items.Should().HaveCount(1);

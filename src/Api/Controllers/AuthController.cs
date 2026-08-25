@@ -12,8 +12,6 @@ namespace TechCurse.Api.Controllers;
 [Consumes("application/json")]
 [Produces("application/json")]
 [Tags("Auth")]
-// Política mais restritiva que a global: estes são os únicos endpoints públicos
-// que aceitam credenciais, e portanto os únicos alvos de força bruta.
 [EnableRateLimiting(RateLimitingSetup.PoliticaAutenticacao)]
 public class AuthController : ControllerBase
 {

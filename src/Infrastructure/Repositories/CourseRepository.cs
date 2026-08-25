@@ -51,7 +51,6 @@ public class CourseRepository : ICourseRepository
             ("datacriacao", false) => query.OrderBy(c => c.DataCriacao),
             ("datacriacao", true) => query.OrderByDescending(c => c.DataCriacao),
 
-            // Fallback padrão se passarem uma propriedade inválida ou vazia
             _ => isDescending ? query.OrderByDescending(c => c.CourseId) : query.OrderBy(c => c.CourseId)
         };
     }

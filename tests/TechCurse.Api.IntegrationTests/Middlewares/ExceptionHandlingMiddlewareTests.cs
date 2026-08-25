@@ -21,14 +21,11 @@ public class ExceptionHandlingMiddlewareTests : IClassFixture<CustomWebApplicati
     [Trait("Category", "Integration")]
     public async Task WhenValidationFails_ShouldReturn422WithProblemDetailsAndErrors()
     {
-        // Arrange
         var client = _factory.CreateAdminClient();
         var invalidCommand = new CreateCourseCommand("", "", "", -1);
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Course", invalidCommand);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
 
@@ -41,13 +38,10 @@ public class ExceptionHandlingMiddlewareTests : IClassFixture<CustomWebApplicati
     [Trait("Category", "Integration")]
     public async Task WhenResourceNotFound_ShouldReturn404WithProblemDetails()
     {
-        // Arrange
         var client = _factory.CreateAdminClient();
 
-        // Act
         var response = await client.GetAsync("/tech-curse/Course/999999");
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
 

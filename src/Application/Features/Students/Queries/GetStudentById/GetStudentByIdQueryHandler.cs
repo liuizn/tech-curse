@@ -32,9 +32,6 @@ public class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQuery, S
 
     public async Task<StudentOutputDto> Handle(GetStudentByIdQuery request, CancellationToken cancellationToken)
     {
-        // Bug Fix: Ignoramos o cache de item para leitura direta pois a validação de segurança precisa do IdentityUserId
-        // A implementação antiga tinha uma falha grave de segurança que pulava a checagem se o DTO (que não possui IdentityUserId)
-        // já estivesse no Cache. O BD será sempre consultado para garantir a segurança. O lookup por PK é leve o suficiente.
 
         var student = await _studentRepository.GetByIdAsync(request.Id);
 

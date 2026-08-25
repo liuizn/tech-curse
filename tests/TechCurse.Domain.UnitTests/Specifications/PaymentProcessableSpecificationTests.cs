@@ -14,7 +14,6 @@ public class PaymentProcessableSpecificationTests
     [Trait("Category", "Unit")]
     public void IsSatisfiedBy_WhenPaymentIsActiveAndPending_ShouldReturnTrue()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -23,10 +22,8 @@ public class PaymentProcessableSpecificationTests
             Amount = 100m
         };
 
-        // Act
         var result = _specification.IsSatisfiedBy(payment);
 
-        // Assert
         result.Should().BeTrue();
     }
 
@@ -34,7 +31,6 @@ public class PaymentProcessableSpecificationTests
     [Trait("Category", "Unit")]
     public void IsSatisfiedBy_WhenPaymentIsInactive_ShouldReturnFalse()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -43,10 +39,8 @@ public class PaymentProcessableSpecificationTests
             Amount = 100m
         };
 
-        // Act
         var result = _specification.IsSatisfiedBy(payment);
 
-        // Assert
         result.Should().BeFalse();
     }
 
@@ -57,7 +51,6 @@ public class PaymentProcessableSpecificationTests
     [Trait("Category", "Unit")]
     public void IsSatisfiedBy_WhenPaymentStatusIsNotPending_ShouldReturnFalse(PaymentStatus status)
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -66,10 +59,8 @@ public class PaymentProcessableSpecificationTests
             Amount = 100m
         };
 
-        // Act
         var result = _specification.IsSatisfiedBy(payment);
 
-        // Assert
         result.Should().BeFalse();
     }
 
@@ -77,7 +68,6 @@ public class PaymentProcessableSpecificationTests
     [Trait("Category", "Unit")]
     public void ErrorMessage_ShouldReturnExpectedMessage()
     {
-        // Act & Assert
         _specification.ErrorMessage.Should().NotBeNullOrWhiteSpace();
     }
 }

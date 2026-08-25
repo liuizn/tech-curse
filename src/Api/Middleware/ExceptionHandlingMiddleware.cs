@@ -33,14 +33,14 @@ public class ExceptionHandlingMiddleware
     {
         var statusCode = exception switch
         {
-            BadRequestException => HttpStatusCode.BadRequest,           //400
-            UnauthorizedException => HttpStatusCode.Unauthorized,       //401
-            ForbiddenAccessException => HttpStatusCode.Forbidden,       //403
-            NotFoundException => HttpStatusCode.NotFound,               //404
-            NotAllowedException => HttpStatusCode.Conflict,             //409
-            ConflictException => HttpStatusCode.Conflict,               //409
-            ValidationException => HttpStatusCode.UnprocessableEntity,  //422
-            GatewayTimeoutException => HttpStatusCode.GatewayTimeout,   //504
+            BadRequestException => HttpStatusCode.BadRequest,
+            UnauthorizedException => HttpStatusCode.Unauthorized,
+            ForbiddenAccessException => HttpStatusCode.Forbidden,
+            NotFoundException => HttpStatusCode.NotFound,
+            NotAllowedException => HttpStatusCode.Conflict,
+            ConflictException => HttpStatusCode.Conflict,
+            ValidationException => HttpStatusCode.UnprocessableEntity,
+            GatewayTimeoutException => HttpStatusCode.GatewayTimeout,
             _ => HttpStatusCode.InternalServerError
         };
 

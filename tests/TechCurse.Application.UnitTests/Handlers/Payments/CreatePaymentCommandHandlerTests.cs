@@ -32,16 +32,13 @@ public class CreatePaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenEnrollmentNotFound_ShouldThrowNotFoundException()
     {
-        // Arrange
         _enrollmentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Enrollment?)null);
 
         var command = new CreatePaymentCommand(1, 100m);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Matrícula não encontrada.");
     }
@@ -50,7 +47,6 @@ public class CreatePaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenEnrollmentNotActive_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var enrollment = new Enrollment { EnrollmentId = 1, StudentId = 2, CourseId = 3 };
         _enrollmentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(enrollment);
@@ -59,10 +55,8 @@ public class CreatePaymentCommandHandlerTests
 
         var command = new CreatePaymentCommand(1, 100m);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Não é possível criar um pagamento para uma matrícula inativa.");
     }
@@ -71,7 +65,6 @@ public class CreatePaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenActivePaymentAlreadyExists_ShouldThrowConflictException()
     {
-        // Arrange
         var enrollment = new Enrollment { EnrollmentId = 1, StudentId = 2, CourseId = 3 };
         _enrollmentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(enrollment);
@@ -82,10 +75,8 @@ public class CreatePaymentCommandHandlerTests
 
         var command = new CreatePaymentCommand(1, 100m);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("Já existe um pagamento ativo para esta matrícula.");
     }
@@ -94,7 +85,6 @@ public class CreatePaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValid_ShouldCreatePaymentAndClearCaches()
     {
-        // Arrange
         var enrollment = new Enrollment { EnrollmentId = 1, StudentId = 2, CourseId = 3 };
         _enrollmentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(enrollment);
@@ -109,10 +99,8 @@ public class CreatePaymentCommandHandlerTests
 
         var command = new CreatePaymentCommand(1, 150m);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.PaymentId.Should().Be(10);
         result.EnrollmentId.Should().Be(1);

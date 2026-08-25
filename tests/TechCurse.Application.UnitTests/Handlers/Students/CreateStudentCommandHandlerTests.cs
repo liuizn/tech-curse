@@ -27,16 +27,13 @@ public class CreateStudentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenEmailAlreadyExists_ShouldThrowConflictException()
     {
-        // Arrange
         _studentRepositoryMock.Setup(r => r.EmailExistsAsync("test@example.com"))
             .ReturnsAsync(true);
 
         var command = new CreateStudentCommand("João", "test@example.com");
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("O e-mail informado já está em uso por outro estudante.");
     }
@@ -45,7 +42,6 @@ public class CreateStudentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenIdentityUserNotFound_ShouldThrowConflictException()
     {
-        // Arrange
         _studentRepositoryMock.Setup(r => r.EmailExistsAsync("test@example.com"))
             .ReturnsAsync(false);
 
@@ -54,10 +50,8 @@ public class CreateStudentCommandHandlerTests
 
         var command = new CreateStudentCommand("João", "test@example.com");
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("Usuário não encontrado.");
     }
@@ -66,7 +60,6 @@ public class CreateStudentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValid_ShouldCreateStudentAndReturnDto()
     {
-        // Arrange
         var identityUser = new IdentityUser { Id = "identity-123", Email = "test@example.com" };
 
         _studentRepositoryMock.Setup(r => r.EmailExistsAsync("test@example.com"))
@@ -81,10 +74,8 @@ public class CreateStudentCommandHandlerTests
 
         var command = new CreateStudentCommand("João Silva", "test@example.com");
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.Id.Should().Be(1);
         result.Nome.Should().Be("João Silva");

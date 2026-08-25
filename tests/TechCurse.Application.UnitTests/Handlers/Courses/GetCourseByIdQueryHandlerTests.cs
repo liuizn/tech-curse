@@ -24,17 +24,14 @@ public class GetCourseByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseIsInCache_ShouldReturnCachedResult()
     {
-        // Arrange
         var cachedDto = new CourseOutputDto(1, "Curso Cache", "Descrição Cache", "Tecnologia", 40, DateTime.UtcNow);
         _cacheServiceMock.Setup(c => c.GetAsync<CourseOutputDto>("courses:item:1"))
             .ReturnsAsync(cachedDto);
 
         var query = new GetCourseByIdQuery(1);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().Be(cachedDto);
         _courseRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<int>()), Times.Never);
     }
@@ -43,7 +40,6 @@ public class GetCourseByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseNotInCache_ShouldGetFromRepositoryAndCacheIt()
     {
-        // Arrange
         _cacheServiceMock.Setup(c => c.GetAsync<CourseOutputDto>("courses:item:1"))
             .ReturnsAsync((CourseOutputDto?)null);
 
@@ -62,10 +58,8 @@ public class GetCourseByIdQueryHandlerTests
 
         var query = new GetCourseByIdQuery(1);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.Id.Should().Be(1);
         result.Titulo.Should().Be("Curso DB");
@@ -78,7 +72,6 @@ public class GetCourseByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseNotFoundInRepository_ShouldThrowNotFoundException()
     {
-        // Arrange
         _cacheServiceMock.Setup(c => c.GetAsync<CourseOutputDto>("courses:item:1"))
             .ReturnsAsync((CourseOutputDto?)null);
 
@@ -87,10 +80,8 @@ public class GetCourseByIdQueryHandlerTests
 
         var query = new GetCourseByIdQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Curso não encontrado.");
     }

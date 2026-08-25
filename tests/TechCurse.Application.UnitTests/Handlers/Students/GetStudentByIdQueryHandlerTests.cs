@@ -24,16 +24,13 @@ public class GetStudentByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentNotFoundOrDeleted_ShouldThrowNotFoundException()
     {
-        // Arrange
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Student?)null);
 
         var query = new GetStudentByIdQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Estudante não encontrado.");
     }
@@ -42,7 +39,6 @@ public class GetStudentByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenNonAdminAndMismatchUser_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var student = new Student { StudentId = 1, IdentityUserId = "user-real", IsDeleted = false };
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(student);
 
@@ -51,10 +47,8 @@ public class GetStudentByIdQueryHandlerTests
 
         var query = new GetStudentByIdQuery(1);
 
-        // Act
         var act = () => _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Você não possui permissão suficiente para acessar este registro.");
     }
@@ -63,7 +57,6 @@ public class GetStudentByIdQueryHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenAdminOrMatchingUser_ShouldReturnStudentDto()
     {
-        // Arrange
         var student = new Student { StudentId = 1, Nome = "Maria", Email = "maria@example.com", IdentityUserId = "user-1", IsDeleted = false, DataCadastro = DateTime.UtcNow };
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(student);
 
@@ -72,10 +65,8 @@ public class GetStudentByIdQueryHandlerTests
 
         var query = new GetStudentByIdQuery(1);
 
-        // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.Id.Should().Be(1);
         result.Nome.Should().Be("Maria");

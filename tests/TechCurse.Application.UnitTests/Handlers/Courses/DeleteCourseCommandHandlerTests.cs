@@ -24,7 +24,6 @@ public class DeleteCourseCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseExistsAndHasNoEnrollments_ShouldDeleteCourseAndInvalidateCache()
     {
-        // Arrange
         var course = new Course
         {
             CourseId = 1,
@@ -42,10 +41,8 @@ public class DeleteCourseCommandHandlerTests
 
         var command = new DeleteCourseCommand(1);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.Should().Be(MediatR.Unit.Value);
         _courseRepositoryMock.Verify(r => r.DeleteAsync(course), Times.Once);
         _cacheServiceMock.Verify(c => c.RemoveAsync("courses:item:1"), Times.Once);
@@ -56,16 +53,13 @@ public class DeleteCourseCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseDoesNotExist_ShouldThrowNotFoundException()
     {
-        // Arrange
         _courseRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Course?)null);
 
         var command = new DeleteCourseCommand(1);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Curso não encontrado.");
 
@@ -76,7 +70,6 @@ public class DeleteCourseCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseHasEnrollments_ShouldThrowConflictException()
     {
-        // Arrange
         var course = new Course
         {
             CourseId = 1,
@@ -94,10 +87,8 @@ public class DeleteCourseCommandHandlerTests
 
         var command = new DeleteCourseCommand(1);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("O curso possui matrículas ativas.");
 

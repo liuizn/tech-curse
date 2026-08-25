@@ -25,7 +25,6 @@ public class UpdateCourseCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseExists_ShouldUpdateCourseAndInvalidateCache()
     {
-        // Arrange
         var existingCourse = new Course
         {
             CourseId = 1,
@@ -41,10 +40,8 @@ public class UpdateCourseCommandHandlerTests
 
         var command = new UpdateCourseCommand(1, "Título Novo", "Descrição Nova", "Tecnologia", 30);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.Should().Be(MediatR.Unit.Value);
         existingCourse.Titulo.Should().Be("Título Novo");
         existingCourse.Descricao.Should().Be("Descrição Nova");
@@ -59,16 +56,13 @@ public class UpdateCourseCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseDoesNotExist_ShouldThrowNotFoundException()
     {
-        // Arrange
         _courseRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Course?)null);
 
         var command = new UpdateCourseCommand(1, "Título Novo", "Descrição Nova", "Tecnologia", 30);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Curso não encontrado.");
 

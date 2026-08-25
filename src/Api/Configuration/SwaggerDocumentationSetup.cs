@@ -26,8 +26,6 @@ public static class SwaggerDocumentationSetup
                 Scheme = securitySchemeName
             });
 
-            // No Microsoft.OpenApi 2.x as referencias deixaram de ser uma propriedade
-            // do proprio schema e passaram a ter tipo proprio (OpenApiSecuritySchemeReference).
             c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
                 { new OpenApiSecuritySchemeReference(securitySchemeName, document), new List<string>() }

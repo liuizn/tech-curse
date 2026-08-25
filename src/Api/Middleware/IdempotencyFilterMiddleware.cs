@@ -18,7 +18,6 @@ public class IdempotencyFilterMiddleware : IAsyncActionFilter
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        // Verifica se o header de idempotência foi enviado
         if (!context.HttpContext.Request.Headers.TryGetValue(HeaderName, out var idempotencyKey))
         {
             throw new BadRequestException($"O header '{HeaderName}' é obrigatório para requisições idempotentes.");
@@ -26,11 +25,9 @@ public class IdempotencyFilterMiddleware : IAsyncActionFilter
 
         string cacheKey = $"idempotency:{idempotencyKey}";
 
-        // 1. Verifica se já existe uma resposta processada para esta chave
         var cachedResponse = await _cacheService.GetAsync<IdempotentResponseModel>(cacheKey);
         if (cachedResponse != null)
         {
-            // Retorna exatamente a mesma resposta anterior sem reprocessar
             context.Result = new ObjectResult(cachedResponse.Body)
             {
                 StatusCode = cachedResponse.StatusCode
@@ -39,10 +36,8 @@ public class IdempotencyFilterMiddleware : IAsyncActionFilter
             return;
         }
 
-        // 2. Executa a ação da Controller
         var executedContext = await next();
 
-        // 3. Captura o resultado gerado e salva no cache
         if (executedContext.Result is ObjectResult objectResult)
         {
             var responseModel = new IdempotentResponseModel
@@ -62,6 +57,5 @@ public class IdempotentResponseModel
 {
     public int StatusCode { get; set; }
 
-    // ObjectResult.Value é anulável (ex.: NoContent), então o corpo replayed também é.
     public object? Body { get; set; }
 }

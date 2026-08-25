@@ -25,11 +25,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     public InMemoryTestCacheService CacheService { get; } = new();
 
-    /// <summary>
-    /// Ambiente usado pelo host de teste. Sobrescreva para exercitar trechos do
-    /// pipeline que só existem fora de "Testing" — o Swagger, por exemplo, só é
-    /// mapeado em Development ou Homolog.
-    /// </summary>
     protected virtual string EnvironmentName => "Testing";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -43,10 +38,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Audience", JwtAudience);
         builder.UseSetting("Jwt:SigningKey", JwtSigningKey);
 
-        // A suíte inteira compartilha o mesmo host e o mesmo IP de origem (nulo, no
-        // TestServer), então todos os testes caem na mesma partição do rate limiter.
-        // Desligado por padrão para que o volume de requisições da suíte não vire
-        // 429 aleatório; RateLimitedAuthEndpointsTests religa com limites próprios.
         builder.UseSetting("RateLimiting:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
@@ -56,7 +47,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 options.UseInMemoryDatabase("TechCurse_IntegrationDb");
             });
 
-            // Substitui ICacheService
             var cacheDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(ICacheService));
             if (cacheDescriptor != null)
             {
@@ -64,7 +54,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             }
             services.AddSingleton<ICacheService>(CacheService);
 
-            // Substitui IConnectionMultiplexer com Mock
             var redisDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IConnectionMultiplexer));
             if (redisDescriptor != null)
             {
@@ -73,7 +62,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             var mockMultiplexer = new Mock<IConnectionMultiplexer>();
             services.AddSingleton(mockMultiplexer.Object);
 
-            // Garante SimulatedPaymentGatewayAdapter
             var gatewayDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IPaymentGatewayAdapter));
             if (gatewayDescriptor != null)
             {

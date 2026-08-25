@@ -7,23 +7,18 @@ public class SimulatedPaymentGatewayAdapter : IPaymentGatewayAdapter
 {
     public async Task<GatewayResponse> CreateTransactionAsync(decimal amount, string idempotencyKey, CancellationToken cancellationToken)
     {
-        // Simulação de Timeout da API externa
         await Task.Delay(500, cancellationToken);
 
-        // Respostas Determinísticas baseadas no valor para facilitar testes
         if (amount == 999.99m)
         {
-            // Simula recusa por fraude
             return MappedErrorResponse("EXT_01", "Transação recusada pelo sistema antifraude.");
         }
 
         if (amount == 500.00m)
         {
-            // Simula saldo insuficiente
             return MappedErrorResponse("EXT_02", "Saldo insuficiente no método de pagamento.");
         }
 
-        // Sucesso
         return new GatewayResponse(
             IsSuccess: true,
             TransactionId: $"sim_{Guid.NewGuid():N}",
@@ -46,10 +41,8 @@ public class SimulatedPaymentGatewayAdapter : IPaymentGatewayAdapter
         return new GatewayResponse(true, externalId, null, null, null, DateTime.UtcNow);
     }
 
-    // Mapeamento interno de erros externos
     private GatewayResponse MappedErrorResponse(string rawErrorCode, string rawMessage)
     {
-        // Aqui você mapearia os códigos exóticos da API externa para um padrão da sua API
         var internalCode = rawErrorCode switch
         {
             "EXT_01" => "FRAUD_DETECTED",

@@ -33,16 +33,13 @@ public class RefundPaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenPaymentNotFound_ShouldThrowNotFoundException()
     {
-        // Arrange
         _paymentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Payment?)null);
 
         var command = new RefundPaymentCommand(1, "key-123");
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Pagamento não encontrado.");
     }
@@ -51,11 +48,10 @@ public class RefundPaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenPaymentNotPaidOrNoExternalTransactionId_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
-            Status = PaymentStatus.Pending, // Not paid
+            Status = PaymentStatus.Pending,
             ExternalTransactionId = null
         };
 
@@ -64,10 +60,8 @@ public class RefundPaymentCommandHandlerTests
 
         var command = new RefundPaymentCommand(1, "key-123");
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Apenas pagamentos processados e com ID de transação podem ser estornados.");
     }
@@ -76,7 +70,6 @@ public class RefundPaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenGatewayFails_ShouldThrowBadRequestException()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -92,10 +85,8 @@ public class RefundPaymentCommandHandlerTests
 
         var command = new RefundPaymentCommand(1, "key-123");
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<BadRequestException>()
             .WithMessage("*REFUND_FAILED*");
     }
@@ -104,7 +95,6 @@ public class RefundPaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenGatewayTimesOut_ShouldThrowGatewayTimeoutException()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -120,10 +110,8 @@ public class RefundPaymentCommandHandlerTests
 
         var command = new RefundPaymentCommand(1, "key-123");
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<GatewayTimeoutException>()
             .WithMessage("A comunicação com o provedor de pagamento excedeu o tempo limite durante o estorno.");
     }
@@ -132,7 +120,6 @@ public class RefundPaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValid_ShouldRefundPaymentAndInvalidateCache()
     {
-        // Arrange
         var payment = new Payment
         {
             PaymentId = 1,
@@ -149,10 +136,8 @@ public class RefundPaymentCommandHandlerTests
 
         var command = new RefundPaymentCommand(1, "key-123");
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         payment.Status.Should().Be(PaymentStatus.Refunded);

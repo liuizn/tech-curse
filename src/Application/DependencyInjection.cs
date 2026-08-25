@@ -15,7 +15,6 @@ namespace TechCurse.Application
             services.AddScoped<IPaymentStrategy, CreditCardPaymentStrategy>();
             services.AddScoped<PaymentStrategyFactory>();
 
-            // Configurar MediatR e FluentValidation para a migração CQRS
             services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());

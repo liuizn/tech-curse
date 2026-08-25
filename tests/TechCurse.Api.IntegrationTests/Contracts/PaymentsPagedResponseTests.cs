@@ -24,7 +24,6 @@ public class PaymentsPagedResponseTests
     [Fact(DisplayName = "GET /payments should return list of payments")]
     public async Task ListPayments_ReturnsOkAndPayments()
     {
-        // Arrange
         IEnumerable<Payment> payments = new List<Payment>()
         {
             new Payment() { PaymentId = 1, EnrollmentId = 1, StudentId = 1, Amount = 100.50m, Status = PaymentStatus.Paid, IsActive = true, CreatedAt = DateTime.UtcNow.AddDays(-5), PaidAt = null, ExternalTransactionId = "PAID_123124123321" },
@@ -66,10 +65,8 @@ public class PaymentsPagedResponseTests
 
         var httpClient = CreateClient(handler, new Uri("http://localhost/"));
 
-        //Act
         var response = await httpClient.GetAsync("/tech-curse/Payment");
 
-        //Assert
         Assert.NotNull(response);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

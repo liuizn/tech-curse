@@ -31,16 +31,13 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenUserIsNotStudentNorAdmin_ShouldThrowNotAllowedException()
     {
-        // Arrange
         _currentUserServiceMock.Setup(s => s.IsInRole(UserRole.Admin)).Returns(false);
         _currentUserServiceMock.Setup(s => s.IsInRole(UserRole.Student)).Returns(false);
 
         var command = new CreateEnrollmentCommand(1, 1);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Apenas estudantes e administradores podem criar matrículas!");
     }
@@ -49,16 +46,13 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenUserEmailIsNull_ShouldThrowNotAllowedException()
     {
-        // Arrange
         _currentUserServiceMock.Setup(s => s.IsInRole(UserRole.Student)).Returns(true);
         _currentUserServiceMock.Setup(s => s.GetUserEmail()).Returns((string?)null);
 
         var command = new CreateEnrollmentCommand(1, 1);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Email do usuário não encontrado!");
     }
@@ -67,17 +61,14 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentNotFound_ShouldThrowNotFoundException()
     {
-        // Arrange
         _currentUserServiceMock.Setup(s => s.IsInRole(UserRole.Student)).Returns(true);
         _currentUserServiceMock.Setup(s => s.GetUserEmail()).Returns("student@example.com");
         _studentRepositoryMock.Setup(r => r.GetByEmailAsync("student@example.com")).ReturnsAsync((Student?)null);
 
         var command = new CreateEnrollmentCommand(1, 1);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Estudante não encontrado!");
     }
@@ -86,7 +77,6 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentIsNotActive_ShouldThrowNotAllowedException()
     {
-        // Arrange
         var student = new Student { StudentId = 1, Email = "student@example.com", Nome = "Student" };
         _currentUserServiceMock.Setup(s => s.IsInRole(UserRole.Student)).Returns(true);
         _currentUserServiceMock.Setup(s => s.GetUserEmail()).Returns("student@example.com");
@@ -95,10 +85,8 @@ public class CreateEnrollmentCommandHandlerTests
 
         var command = new CreateEnrollmentCommand(1, 1);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotAllowedException>()
             .WithMessage("Estudante não está ativo!");
     }
@@ -107,7 +95,6 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenCourseNotFound_ShouldThrowNotFoundException()
     {
-        // Arrange
         var student = new Student { StudentId = 1, Email = "student@example.com", Nome = "Student" };
         _currentUserServiceMock.Setup(s => s.IsInRole(UserRole.Student)).Returns(true);
         _currentUserServiceMock.Setup(s => s.GetUserEmail()).Returns("student@example.com");
@@ -117,10 +104,8 @@ public class CreateEnrollmentCommandHandlerTests
 
         var command = new CreateEnrollmentCommand(1, 10);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Curso não encontrado!");
     }
@@ -129,7 +114,6 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentAlreadyEnrolled_ShouldThrowConflictException()
     {
-        // Arrange
         var student = new Student { StudentId = 1, Email = "student@example.com", Nome = "Student" };
         var course = new Course
         {
@@ -150,10 +134,8 @@ public class CreateEnrollmentCommandHandlerTests
 
         var command = new CreateEnrollmentCommand(1, 10);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("Estudante já está matriculado neste curso!");
     }
@@ -162,7 +144,6 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValidRequestByStudent_ShouldCreateEnrollment()
     {
-        // Arrange
         var student = new Student { StudentId = 1, Email = "student@example.com", Nome = "Student" };
         var course = new Course
         {
@@ -182,10 +163,8 @@ public class CreateEnrollmentCommandHandlerTests
 
         var command = new CreateEnrollmentCommand(1, 10);
 
-        // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         _enrollmentRepositoryMock.Verify(r => r.AddAsync(It.Is<Enrollment>(e => e.StudentId == 1 && e.CourseId == 10)), Times.Once);
     }
 
@@ -193,7 +172,6 @@ public class CreateEnrollmentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValidRequestByAdmin_ShouldCreateEnrollmentUsingStudentId()
     {
-        // Arrange
         var student = new Student { StudentId = 5, Email = "student5@example.com", Nome = "Student 5" };
         var course = new Course
         {
@@ -213,10 +191,8 @@ public class CreateEnrollmentCommandHandlerTests
 
         var command = new CreateEnrollmentCommand(5, 10);
 
-        // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         _enrollmentRepositoryMock.Verify(r => r.AddAsync(It.Is<Enrollment>(e => e.StudentId == 5 && e.CourseId == 10)), Times.Once);
     }
 }

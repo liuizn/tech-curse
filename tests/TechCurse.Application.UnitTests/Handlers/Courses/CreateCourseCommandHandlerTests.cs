@@ -23,17 +23,14 @@ public class CreateCourseCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValidCommand_ShouldCreateCourseAndClearListCache()
     {
-        // Arrange
         var command = new CreateCourseCommand("Curso C#", "Curso completo de C#", "Tecnologia", 40);
 
         _courseRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Course>()))
             .Callback<Course>(c => c.CourseId = 1)
             .Returns(Task.CompletedTask);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.Should().NotBeNull();
         result.Titulo.Should().Be("Curso C#");
         result.Descricao.Should().Be("Curso completo de C#");

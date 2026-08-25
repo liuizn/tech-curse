@@ -22,7 +22,6 @@ public class IdempotencyMiddlewareTests : IClassFixture<CustomWebApplicationFact
     [Trait("Category", "Integration")]
     public async Task WhenSameIdempotencyKeySentTwice_ShouldReturnCachedResultWithoutRecreation()
     {
-        // Arrange
         var client = _factory.CreateAdminClient();
         var idempotencyKey = $"idemp-test-{Guid.NewGuid():N}";
         client.DefaultRequestHeaders.Add("Idempotency-Key", idempotencyKey);
@@ -72,16 +71,12 @@ public class IdempotencyMiddlewareTests : IClassFixture<CustomWebApplicationFact
 
         var input = new CreatePaymentDto(enrollmentId, 100.00m);
 
-        // Act 1: First request
         var response1 = await client.PostAsJsonAsync("/tech-curse/Payment", input);
 
-        // Assert 1
         response1.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        // Act 2: Second request with the same Idempotency-Key
         var response2 = await client.PostAsJsonAsync("/tech-curse/Payment", input);
 
-        // Assert 2
         response2.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 }

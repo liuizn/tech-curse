@@ -32,16 +32,13 @@ public class DeleteStudentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenStudentNotFoundOrDeleted_ShouldThrowNotFoundException()
     {
-        // Arrange
         _studentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Student?)null);
 
         var command = new DeleteStudentCommand(1);
 
-        // Act
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("Estudante não encontrado.");
     }
@@ -50,7 +47,6 @@ public class DeleteStudentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValid_ShouldSoftDeleteStudentAndLockoutUser()
     {
-        // Arrange
         var identityUser = new IdentityUser { Id = "user-1", Email = "test@example.com" };
         var student = new Student
         {
@@ -66,10 +62,8 @@ public class DeleteStudentCommandHandlerTests
 
         var command = new DeleteStudentCommand(1);
 
-        // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         student.IsDeleted.Should().BeTrue();
         student.DeletedAt.Should().NotBeNull();
 

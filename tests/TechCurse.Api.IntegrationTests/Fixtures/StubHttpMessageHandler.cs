@@ -1,6 +1,5 @@
 namespace TechCurse.Api.IntegrationTests.Fixtures;
 
-// Handler de teste compartilhado para simular respostas HTTP
 public sealed class StubHttpMessageHandler : HttpMessageHandler
 {
     private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;

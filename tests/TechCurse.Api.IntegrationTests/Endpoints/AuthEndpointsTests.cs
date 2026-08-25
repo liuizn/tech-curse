@@ -25,16 +25,13 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Trait("Category", "Integration")]
     public async Task Register_WhenValid_ShouldReturn201Created()
     {
-        // Arrange
         await _factory.EnsureRolesCreatedAsync();
         var client = _factory.CreateAnonymousClient();
         var email = $"new_auth_user_{Guid.NewGuid():N}@techcurse.com";
         var input = new RegisterInputDto("NovoUsuario", email, UserRole.Student, "SenhaForte@123", "SenhaForte@123");
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Auth/register", input);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
@@ -42,13 +39,11 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Trait("Category", "Integration")]
     public async Task Login_WhenCredentialsValid_ShouldReturn200OK_WithToken()
     {
-        // Arrange
         await _factory.EnsureRolesCreatedAsync();
         var client = _factory.CreateAnonymousClient();
         var email = $"login_user_{Guid.NewGuid():N}@techcurse.com";
         var password = "SenhaForte@123";
 
-        // Create user using UserManager
         using (var scope = _factory.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
@@ -62,10 +57,8 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         var input = new LoginInputDto(email, password);
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Auth/login", input);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var authOutput = await response.Content.ReadFromJsonAsync<AuthOutputDto>();
         authOutput.Should().NotBeNull();
@@ -77,14 +70,11 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Trait("Category", "Integration")]
     public async Task Login_WhenPasswordInvalid_ShouldReturn401Unauthorized()
     {
-        // Arrange
         var client = _factory.CreateAnonymousClient();
         var input = new LoginInputDto("nonexistent@techcurse.com", "WrongPassword@123");
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Auth/login", input);
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -92,15 +82,12 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Trait("Category", "Integration")]
     public async Task Login_WhenCredentialsValid_ShouldPersistApenasOHashDoRefreshToken()
     {
-        // Arrange
         var client = _factory.CreateAnonymousClient();
         var (email, senha) = await CriarUsuarioAsync();
 
-        // Act
         var response = await client.PostAsJsonAsync("/tech-curse/Auth/login", new LoginInputDto(email, senha));
         var authOutput = await response.Content.ReadFromJsonAsync<AuthOutputDto>();
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var scope = _factory.Services.CreateScope();
@@ -109,12 +96,10 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         var valorPersistido = await userManager.GetAuthenticationTokenAsync(user!, "JWTApp", "RefreshToken");
 
-        // O que está no banco é o SHA-256 (32 bytes), não o token de 64 bytes emitido.
         valorPersistido.Should().NotBeNullOrEmpty();
         valorPersistido.Should().NotBe(authOutput!.RefreshToken);
         Convert.FromBase64String(valorPersistido!).Should().HaveCount(32);
 
-        // E o refresh token ganhou expiração própria, no futuro.
         var expiracaoPersistida = await userManager.GetAuthenticationTokenAsync(user!, "JWTApp", "RefreshTokenExpiry");
         expiracaoPersistida.Should().NotBeNullOrEmpty();
         DateTimeOffset.Parse(expiracaoPersistida!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
@@ -125,19 +110,16 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Trait("Category", "Integration")]
     public async Task Refresh_WhenRefreshTokenValido_ShouldReturn200_ComTokensRotacionados()
     {
-        // Arrange
         var client = _factory.CreateAnonymousClient();
         var (email, senha) = await CriarUsuarioAsync();
 
         var loginResponse = await client.PostAsJsonAsync("/tech-curse/Auth/login", new LoginInputDto(email, senha));
         var login = await loginResponse.Content.ReadFromJsonAsync<AuthOutputDto>();
 
-        // Act
         var response = await client.PostAsJsonAsync(
             "/tech-curse/Auth/refresh",
             new RefreshTokenInputDto(login!.AccessToken, login.RefreshToken));
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var refresh = await response.Content.ReadFromJsonAsync<AuthOutputDto>();
@@ -150,7 +132,6 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Trait("Category", "Integration")]
     public async Task Refresh_WhenRefreshTokenNaoConfere_ShouldReturn401Unauthorized()
     {
-        // Arrange
         var client = _factory.CreateAnonymousClient();
         var (email, senha) = await CriarUsuarioAsync();
 
@@ -159,18 +140,13 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         var refreshTokenForjado = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 
-        // Act
         var response = await client.PostAsJsonAsync(
             "/tech-curse/Auth/refresh",
             new RefreshTokenInputDto(login!.AccessToken, refreshTokenForjado));
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    /// <summary>
-    /// Cria um usuário Student com e-mail único e devolve as credenciais.
-    /// </summary>
     private async Task<(string Email, string Senha)> CriarUsuarioAsync()
     {
         await _factory.EnsureRolesCreatedAsync();
