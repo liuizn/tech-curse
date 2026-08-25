@@ -68,8 +68,8 @@ public class GetCoursesQueryHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.TotalCount.Should().Be(1);
-        result.Items.Should().HaveCount(1);
-        result.Items.First().Titulo.Should().Be("Curso DB");
+        result.Items.Should().ContainSingle()
+            .Which.Titulo.Should().Be("Curso DB");
 
         _courseRepositoryMock.Verify(r => r.GetPagedAsync(searchParams), Times.Once);
         _cacheServiceMock.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<PagedResultDto<CourseOutputDto>>(), It.IsAny<TimeSpan>()), Times.Once);

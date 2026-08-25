@@ -8,10 +8,10 @@ public class Payment
 
     // Relations
     public int EnrollmentId { get; set; }
-    public Enrollment Enrollment { get; set; }
+    public Enrollment Enrollment { get; set; } = null!;
 
     public int StudentId { get; set; }
-    public Student Student { get; set; }
+    public Student Student { get; set; } = null!;
 
     public decimal Amount { get; set; }
 

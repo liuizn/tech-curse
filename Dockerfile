@@ -18,6 +18,10 @@ WORKDIR /build
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
+# Central Package Management: os .csproj nao carregam Version, entao o restore
+# depende destes dois arquivos da raiz. Precisam vir antes dos projetos.
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
+
 # Copia APENAS os projetos que compõem a aplicação (sem projetos de teste)
 COPY ["src/Domain/TechCurse.Domain.csproj", "src/Domain/"]
 COPY ["src/Application/TechCurse.Application.csproj", "src/Application/"]

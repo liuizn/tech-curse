@@ -33,7 +33,7 @@ public class ExceptionHandlingMiddleware
     {
         var statusCode = exception switch
         {
-            BadRequestExecption => HttpStatusCode.BadRequest,           //400
+            BadRequestException => HttpStatusCode.BadRequest,           //400
             UnauthorizedException => HttpStatusCode.Unauthorized,       //401
             ForbiddenAccessException => HttpStatusCode.Forbidden,       //403
             NotFoundException => HttpStatusCode.NotFound,               //404

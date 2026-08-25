@@ -21,6 +21,10 @@ public class GetSelfStudentQueryHandler : IRequestHandler<GetSelfStudentQuery, S
     public async Task<StudentOutputDto> Handle(GetSelfStudentQuery request, CancellationToken cancellationToken)
     {
         var currentUserEmail = _currentUserService.GetUserEmail();
+        if (currentUserEmail == null)
+        {
+            throw new NotAllowedException("Email do usuário não encontrado!");
+        }
 
         var student = await _studentRepository.GetByEmailAsync(currentUserEmail);
 

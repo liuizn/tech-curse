@@ -24,7 +24,7 @@ namespace TechCurse.Infrastructure
 
             if (environment.IsProduction())
             {
-                // Produção
+                services.AddScoped<IPaymentGatewayAdapter, SimulatedPaymentGatewayAdapter>();
             }
             else
             {

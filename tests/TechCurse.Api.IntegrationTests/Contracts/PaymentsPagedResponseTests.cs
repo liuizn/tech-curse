@@ -1,15 +1,16 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using TechCurse.Api.IntegrationTests.Fixtures;
 using TechCurse.Application.DTOs;
 using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
 using Xunit;
 
-namespace TechCurse.Api.IntegrationTests;
+namespace TechCurse.Api.IntegrationTests.Contracts;
 
 [Trait("Category", "Integration")]
-public class PaymentAPITest
+public class PaymentsPagedResponseTests
 {
     private static HttpClient CreateClient(Func<HttpRequestMessage, HttpResponseMessage> handler, Uri? baseAddress = null)
     {

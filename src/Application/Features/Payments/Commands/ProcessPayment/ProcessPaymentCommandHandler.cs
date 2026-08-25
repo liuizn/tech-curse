@@ -59,7 +59,7 @@ public class ProcessPaymentCommandHandler : IRequestHandler<ProcessPaymentComman
             {
                 _logger.LogWarning("Falha no gateway ao processar PaymentId {PaymentId}. Erro: {ErrorCode} - {ErrorMessage}",
                     payment.PaymentId, gatewayResult.ErrorCode, gatewayResult.ErrorMessage);
-                throw new BadRequestExecption($"Falha ao processar pagamento [{gatewayResult.ErrorCode}]: {gatewayResult.ErrorMessage}");
+                throw new BadRequestException($"Falha ao processar pagamento [{gatewayResult.ErrorCode}]: {gatewayResult.ErrorMessage}");
             }
 
             payment.Status = PaymentStatus.Paid;

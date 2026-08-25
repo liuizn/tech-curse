@@ -21,7 +21,7 @@ public class IdempotencyFilterMiddleware : IAsyncActionFilter
         // Verifica se o header de idempotência foi enviado
         if (!context.HttpContext.Request.Headers.TryGetValue(HeaderName, out var idempotencyKey))
         {
-            throw new BadRequestExecption($"O header '{HeaderName}' é obrigatório para requisições idempotentes.");
+            throw new BadRequestException($"O header '{HeaderName}' é obrigatório para requisições idempotentes.");
         }
 
         string cacheKey = $"idempotency:{idempotencyKey}";
@@ -61,5 +61,7 @@ public class IdempotencyFilterMiddleware : IAsyncActionFilter
 public class IdempotentResponseModel
 {
     public int StatusCode { get; set; }
-    public object Body { get; set; }
+
+    // ObjectResult.Value é anulável (ex.: NoContent), então o corpo replayed também é.
+    public object? Body { get; set; }
 }

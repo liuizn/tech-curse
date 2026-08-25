@@ -27,10 +27,10 @@ public class CreateStudentCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_Nome_Is_Empty(string invalidName)
+    public void Should_Have_Error_When_Nome_Is_Empty(string? invalidName)
     {
         // Arrange
-        var command = new CreateStudentCommand(invalidName, "joao.silva@example.com");
+        var command = new CreateStudentCommand(invalidName!, "joao.silva@example.com");
 
         // Act
         var result = _validator.TestValidate(command);
@@ -59,10 +59,10 @@ public class CreateStudentCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_Email_Is_Empty(string invalidEmail)
+    public void Should_Have_Error_When_Email_Is_Empty(string? invalidEmail)
     {
         // Arrange
-        var command = new CreateStudentCommand("João Silva", invalidEmail);
+        var command = new CreateStudentCommand("João Silva", invalidEmail!);
 
         // Act
         var result = _validator.TestValidate(command);
@@ -77,10 +77,10 @@ public class CreateStudentCommandValidatorTests
     [InlineData("@example.com")]
     [InlineData("joao.example.com")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_Email_Format_Is_Invalid(string invalidEmail)
+    public void Should_Have_Error_When_Email_Format_Is_Invalid(string? invalidEmail)
     {
         // Arrange
-        var command = new CreateStudentCommand("João Silva", invalidEmail);
+        var command = new CreateStudentCommand("João Silva", invalidEmail!);
 
         // Act
         var result = _validator.TestValidate(command);

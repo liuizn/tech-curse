@@ -58,10 +58,10 @@ public class ProcessPaymentCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_IdempotencyKey_Is_Empty(string invalidKey)
+    public void Should_Have_Error_When_IdempotencyKey_Is_Empty(string? invalidKey)
     {
         // Arrange
-        var command = new ProcessPaymentCommand(1, PaymentMethodType.CreditCard, invalidKey);
+        var command = new ProcessPaymentCommand(1, PaymentMethodType.CreditCard, invalidKey!);
 
         // Act
         var result = _validator.TestValidate(command);

@@ -53,7 +53,7 @@ public class RefundPaymentCommandHandler : IRequestHandler<RefundPaymentCommand,
             {
                 _logger.LogWarning("Falha no gateway ao estornar PaymentId {PaymentId}. Erro: {ErrorCode} - {ErrorMessage}",
                     payment.PaymentId, gatewayResult.ErrorCode, gatewayResult.ErrorMessage);
-                throw new BadRequestExecption($"Falha ao estornar pagamento [{gatewayResult.ErrorCode}]: {gatewayResult.ErrorMessage}");
+                throw new BadRequestException($"Falha ao estornar pagamento [{gatewayResult.ErrorCode}]: {gatewayResult.ErrorMessage}");
             }
 
             payment.Status = PaymentStatus.Refunded;

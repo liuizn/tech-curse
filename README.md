@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean%20Architecture%20%7C%20CQRS-239120?style=for-the-badge&logo=c-sharp&logoColor=white" alt="Clean Architecture & CQRS" />
   <img src="https://img.shields.io/badge/MediatR-Pipeline%20Behaviors-34495E?style=for-the-badge" alt="MediatR" />
   <img src="https://img.shields.io/badge/Validation-FluentValidation-009688?style=for-the-badge" alt="FluentValidation" />
-  <img src="https://img.shields.io/badge/Tests-204%20Passing%20(100%25)-brightgreen?style=for-the-badge&logo=xunit" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-206%20Passing%20(100%25)-brightgreen?style=for-the-badge&logo=xunit" alt="Tests" />
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License" />
@@ -242,14 +242,14 @@ sequenceDiagram
 
 ## 🧪 Suíte de Testes Automatizados
 
-A solução adota a cultura de qualidade estrita, contando com **204 testes automatizados (100% passing)** estruturados em 4 projetos de testes especializados:
+A solução adota a cultura de qualidade estrita, contando com **206 testes automatizados (100% passing)** estruturados em 4 projetos de testes especializados:
 
 ```
 📦 tests
  ┣ 📂 TechCurse.ArchitectureTests       (23 testes)  -> NetArchTest.Rules
  ┣ 📂 TechCurse.Domain.UnitTests        (6 testes)   -> Entidades, Specifications
  ┣ 📂 TechCurse.Application.UnitTests   (133 testes) -> Handlers, Validators
- ┗ 📂 TechCurse.Api.IntegrationTests    (42 testes)  -> WebApplicationFactory, Endpoints, Persistência
+ ┗ 📂 TechCurse.Api.IntegrationTests    (44 testes)  -> WebApplicationFactory, Endpoints, Persistência
 ```
 
 ### Como Executar os Testes
@@ -262,9 +262,9 @@ dotnet test --logger "console;verbosity=normal"
 ### Detalhamento dos Projetos de Teste
 
 ```mermaid
-pie title Distribuição dos 204 Testes Automatizados
+pie title Distribuição dos 206 Testes Automatizados
     "Application Unit Tests (Handlers / Validators)" : 133
-    "Integration Tests (E2E / Middlewares / Persistência)" : 42
+    "Integration Tests (E2E / Middlewares / Persistência)" : 44
     "Architecture Tests (NetArchTest Rules)" : 23
     "Domain Unit Tests (Entidades / Specifications)" : 6
 ```
@@ -279,10 +279,10 @@ pie title Distribuição dos 204 Testes Automatizados
 3. **Testes Unitários de Aplicação (`TechCurse.Application.UnitTests` - 133 testes):**
    - Cobre 100% dos Handlers de Commands e Queries do MediatR com isolamento via `Moq`.
    - Valida todas as regras de validação do FluentValidation (entradas válidas, nulas, limites e formatos).
-4. **Testes de Integração (`TechCurse.Api.IntegrationTests` - 42 testes):**
+4. **Testes de Integração (`TechCurse.Api.IntegrationTests` - 44 testes):**
    - Executa fluxos ponta a ponta simulando requisições HTTP reais com `WebApplicationFactory`.
    - Valida pipeline de autenticação JWT, autorização RBAC, middlewares de exceção e idempotência.
-   - Cobre persistência direta no `TechCurseContext` em `Persistence/`.
+   - Cobre persistência direta no `TechCurseContext` em `Persistence/` e a geração do documento OpenAPI.
 
 ---
 

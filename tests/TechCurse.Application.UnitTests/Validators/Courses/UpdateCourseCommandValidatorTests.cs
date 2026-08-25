@@ -43,10 +43,10 @@ public class UpdateCourseCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_Titulo_Is_Empty_Or_Null(string invalidTitle)
+    public void Should_Have_Error_When_Titulo_Is_Empty_Or_Null(string? invalidTitle)
     {
         // Arrange
-        var command = new UpdateCourseCommand(1, invalidTitle, "Descrição válida", "Tecnologia", 40);
+        var command = new UpdateCourseCommand(1, invalidTitle!, "Descrição válida", "Tecnologia", 40);
 
         // Act
         var result = _validator.TestValidate(command);
@@ -75,10 +75,10 @@ public class UpdateCourseCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_Descricao_Is_Empty_Or_Null(string invalidDesc)
+    public void Should_Have_Error_When_Descricao_Is_Empty_Or_Null(string? invalidDesc)
     {
         // Arrange
-        var command = new UpdateCourseCommand(1, "Curso C#", invalidDesc, "Tecnologia", 40);
+        var command = new UpdateCourseCommand(1, "Curso C#", invalidDesc!, "Tecnologia", 40);
 
         // Act
         var result = _validator.TestValidate(command);
@@ -92,10 +92,10 @@ public class UpdateCourseCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_Categoria_Is_Empty_Or_Null(string invalidCat)
+    public void Should_Have_Error_When_Categoria_Is_Empty_Or_Null(string? invalidCat)
     {
         // Arrange
-        var command = new UpdateCourseCommand(1, "Curso C#", "Descrição válida", invalidCat, 40);
+        var command = new UpdateCourseCommand(1, "Curso C#", "Descrição válida", invalidCat!, 40);
 
         // Act
         var result = _validator.TestValidate(command);

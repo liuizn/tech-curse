@@ -96,7 +96,7 @@ public class RefundPaymentCommandHandlerTests
         var act = () => _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestExecption>()
+        await act.Should().ThrowAsync<BadRequestException>()
             .WithMessage("*REFUND_FAILED*");
     }
 

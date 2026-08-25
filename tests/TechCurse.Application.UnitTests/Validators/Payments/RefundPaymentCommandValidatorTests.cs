@@ -43,10 +43,10 @@ public class RefundPaymentCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_IdempotencyKey_Is_Empty(string invalidKey)
+    public void Should_Have_Error_When_IdempotencyKey_Is_Empty(string? invalidKey)
     {
         // Arrange
-        var command = new RefundPaymentCommand(1, invalidKey);
+        var command = new RefundPaymentCommand(1, invalidKey!);
 
         // Act
         var result = _validator.TestValidate(command);

@@ -1,4 +1,4 @@
-namespace TechCurse.Api.IntegrationTests;
+namespace TechCurse.Api.IntegrationTests.Fixtures;
 
 // Handler de teste compartilhado para simular respostas HTTP
 public sealed class StubHttpMessageHandler : HttpMessageHandler

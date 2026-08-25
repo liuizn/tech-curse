@@ -1,4 +1,4 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi;
 
 namespace TechCurse.Api.Configuration;
 
@@ -26,22 +26,11 @@ public static class SwaggerDocumentationSetup
                 Scheme = securitySchemeName
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+            // No Microsoft.OpenApi 2.x as referencias deixaram de ser uma propriedade
+            // do proprio schema e passaram a ter tipo proprio (OpenApiSecuritySchemeReference).
+            c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = securitySchemeName
-                        },
-                        Scheme = "oauth2",
-                        Name = securitySchemeName,
-                        In = ParameterLocation.Header,
-                    },
-                    new List<string>()
-                }
+                { new OpenApiSecuritySchemeReference(securitySchemeName, document), new List<string>() }
             });
 
             c.EnableAnnotations();

@@ -1,0 +1,15 @@
+<Project>
+
+  <!--
+    Propriedades comuns a todos os projetos da solution. Cada .csproj declara
+    apenas o que lhe e proprio (RootNamespace, SDK, referencias).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

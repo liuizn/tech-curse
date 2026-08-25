@@ -27,10 +27,10 @@ public class UpdateStudentCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [Trait("Category", "Unit")]
-    public void Should_Have_Error_When_Nome_Is_Empty(string invalidName)
+    public void Should_Have_Error_When_Nome_Is_Empty(string? invalidName)
     {
         // Arrange
-        var command = new UpdateStudentCommand(1, invalidName);
+        var command = new UpdateStudentCommand(1, invalidName!);
 
         // Act
         var result = _validator.TestValidate(command);

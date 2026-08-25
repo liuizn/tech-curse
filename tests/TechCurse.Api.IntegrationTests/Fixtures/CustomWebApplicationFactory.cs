@@ -25,9 +25,16 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     public InMemoryTestCacheService CacheService { get; } = new();
 
+    /// <summary>
+    /// Ambiente usado pelo host de teste. Sobrescreva para exercitar trechos do
+    /// pipeline que só existem fora de "Testing" — o Swagger, por exemplo, só é
+    /// mapeado em Development ou Homolog.
+    /// </summary>
+    protected virtual string EnvironmentName => "Testing";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment(EnvironmentName);
 
         builder.UseSetting("UseInMemoryDatabase", "true");
         builder.UseSetting("ConnectionStrings:RedisCache", "localhost:6379,abortConnect=false");

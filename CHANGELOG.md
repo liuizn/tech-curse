@@ -15,14 +15,26 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Namespaces** `TechCurse.src.<Camada>` passaram a `TechCurse.<Camada>`; o segmento `src` era artefato de derivação por caminho. As migrations passaram de `TechCurse.Migrations` para `TechCurse.Infrastructure.Migrations`.
 - **Projetos de teste renomeados** para `TechCurse.ArchitectureTests`, `TechCurse.Application.UnitTests` e `TechCurse.Api.IntegrationTests`.
 - `PaymentPersistenceTests` (antigo `PaymentTests`) convertido de ISO-8859-1 para UTF-8, corrigindo os acentos dos comentários em pt-BR.
+- **Central Package Management**: todas as versões de pacote centralizadas em `Directory.Packages.props`; propriedades comuns em `Directory.Build.props` (raiz) e `tests/Directory.Build.props`. Os oito `.csproj` deixaram de repetir `TargetFramework`, `Nullable`, `ImplicitUsings` e versões.
+- **Pacotes atualizados**: stack Microsoft/EF Core para `10.0.11`, Serilog.AspNetCore `8.0.3`→`10.0.0`, Serilog.Sinks.Seq `8.0.0`→`9.1.0`, StackExchange.Redis `3.0.17`→`3.1.31`, Swashbuckle `6.6.2`→`10.2.3`, xUnit `2.5.3`→`2.9.3`, Test SDK `17.8.0`→`18.9.0`, coverlet `6.0.0`→`10.0.1`. MediatR permanece em `12.4.1` de propósito — a `13.0` passou a exigir licença comercial.
+- **`SwaggerDocumentationSetup` migrado para Microsoft.OpenApi 2.x** (exigido pelo Swashbuckle 10): namespace `Microsoft.OpenApi.Models` achatado para `Microsoft.OpenApi`, `OpenApiReference` substituído por `OpenApiSecuritySchemeReference` e `AddSecurityRequirement` agora recebe uma factory que recebe o `OpenApiDocument`.
+- **`BadRequestExecption` renomeada para `BadRequestException`**, corrigindo o typo em todos os pontos de uso.
+- `PaymentAPITest.cs` renomeado para `Contracts/PaymentsPagedResponseTests.cs` e `StubHttpMessageHandler.cs` movido para `Fixtures/` — o arquivo nunca exercitou endpoints, apenas o round-trip JSON do `PagedResultDto`.
 
 ### ✨ Adicionado
 - **`TechCurse.Domain.UnitTests`** — quarto projeto de teste, com os 6 testes de entidades e Specifications que antes viviam no projeto de unitários de aplicação. Referencia exclusivamente `TechCurse.Domain`.
+- **`SwaggerDocumentTests`** — dois testes de integração que validam a geração do documento OpenAPI. A suíte não passava pelo Swagger, então quebras na configuração do Swashbuckle só apareciam ao abrir a UI.
+- `CustomWebApplicationFactory.EnvironmentName` virou virtual, permitindo exercitar trechos do pipeline que só existem fora do ambiente `Testing`.
 
 ### 🐛 Corrigido
+- **Gateway de pagamento não era registrado em Production**: o ramo `if (environment.IsProduction())` em `Infrastructure/DependencyInjection.cs` estava vazio, e qualquer endpoint de pagamento falharia na resolução da dependência.
+- **Divergência de versão do FluentValidation**: produção resolvia `11.10.0` (transitivo de `FluentValidation.DependencyInjectionExtensions`) enquanto os testes de validator rodavam contra `12.1.1`. Ambos agora em `12.1.1`.
+- **Versão flutuante** `Microsoft.AspNetCore.Mvc.Testing 10.0.0-*` fixada em `10.0.11`, tornando o build determinístico.
+- **Build limpo**: os 22 warnings (`CS8618`, `CS8602`, `CS8604`, `CS8601`, `NU1510`) e os 11 `xUnit1012` revelados pelos analyzers do xUnit 2.9 foram eliminados. `PagedResultDto<T>.Items` deixou de ser `IEnumerable<T?>` — um resultado paginado não contém itens nulos.
 - `TechCurse.Application.UnitTests` referenciava `TechCurse.Api` sem utilizá-lo e dependia de `TechCurse.Infrastructure` apenas por transitividade. Com os testes de persistência movidos para o projeto de integração, ambas as referências foram removidas.
+- `Dockerfile` passou a copiar `Directory.Build.props` e `Directory.Packages.props`, sem os quais o restore com CPM falharia na imagem.
 
-> Distribuição atual dos 204 testes: 23 arquitetura, 6 domínio, 133 aplicação, 42 integração.
+> Distribuição atual dos 206 testes: 23 arquitetura, 6 domínio, 133 aplicação, 44 integração. Build com **0 warnings e 0 erros**.
 
 ---
 
