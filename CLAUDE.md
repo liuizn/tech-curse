@@ -8,9 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 API REST em .NET 10 / C# 14 para uma plataforma de cursos (cursos, estudantes, matrículas e pagamentos), estruturada em Clean Architecture + CQRS com Vertical Slices (MediatR), SQL Server (EF Core 10), Redis, Serilog/Seq e autenticação JWT com ASP.NET Core Identity.
 
+Material de apoio (diagrama de arquitetura, collection do Postman) fica em `docs/`.
+
 ## Comandos
 
-Todos executados na raiz do repositório. A solution é `TechCurse.slnx` (formato slnx, não `.sln`).
+Todos executados na raiz do repositório. A solution é `TechCurse.slnx` (formato slnx, não `.sln`). Versões de pacote são gerenciadas centralmente em `Directory.Packages.props` (Central Package Management) — os `.csproj` só declaram `<PackageReference Include="..." />` sem `Version`; propriedades comuns (`TargetFramework`, `Nullable`, `ImplicitUsings`, etc.) vêm de `Directory.Build.props` na raiz, com um `tests/Directory.Build.props` adicional para o toolchain xUnit dos quatro projetos de teste.
 
 ```bash
 dotnet build TechCurse.slnx
@@ -111,10 +113,8 @@ Ao criar uma nova slice, o caminho completo é: `Command`/`Query` + `Handler` + 
 ## Armadilhas conhecidas
 
 - **Migrations vivem em `src/Infrastructure/Migrations/`** (namespace `TechCurse.Infrastructure.Migrations`), mesmo assembly do `TechCurseContext` — por isso não é preciso configurar `MigrationsAssembly()`. O EF localiza migrations pelos atributos `[DbContext]`/`[Migration]`, não por convenção de diretório. Nada fora de `src/` entra em compilação, e o `Dockerfile` copia apenas `src/`: arquivo de código colocado fora dessa árvore é silenciosamente ignorado pelo build.
-- **`Student` tem query filter global (`!IsDeleted`) e é a ponta obrigatória** dos relacionamentos com `Enrollment` e `Payment`, que não têm filtro equivalente. O EF emite `PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning` no build: queries com join podem se comportar de forma inesperada para alunos soft-deleted.
-- **`IPaymentGatewayAdapter` fica no arquivo `Application/Interfaces/IPaymentGateway.cs`** — o nome do arquivo não bate com o da interface; procure pelo nome da interface, não do arquivo.
-- **Nenhum `IPaymentGatewayAdapter` é registrado em Production**: o `if (environment.IsProduction())` em `Infrastructure/DependencyInjection.cs` está vazio, e só o `SimulatedPaymentGatewayAdapter` é registrado fora de produção.
-- **`BadRequestExecption`** está grafado assim (com o typo) em todo o código — mantenha a grafia ao referenciá-la.
+- **`Student` tem query filter global (`!IsDeleted`) e é a ponta obrigatória** dos relacionamentos com `Enrollment` e `Payment`, que não têm filtro equivalente. Queries com join podem se comportar de forma inesperada para alunos soft-deleted. O EF sinaliza isso com `PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning`, emitido na construção do modelo (runtime / comandos `dotnet ef`) — **não** na saída do compilador. Decidir se `Enrollment` e `Payment` também devem ganhar filtro continua em aberto.
+- **Propriedades de entidade usam `= null!` / `= string.Empty`** em vez de `required`: navegações são preenchidas pelo EF, e `required` quebraria os object initializers espalhados pelos testes. O build roda com **zero warnings** — se um `dotnet build` seu passar a emitir CS86xx, é código novo, não ruído herdado.
 
 ## Branches
 
