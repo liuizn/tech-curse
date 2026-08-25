@@ -13,6 +13,19 @@ namespace TechCurse.Infrastructure.Identity;
 
 public class TokenService : ITokenService
 {
+    /// <summary>Entropia do refresh token. 64 bytes = 512 bits.</summary>
+    private const int TamanhoDoRefreshTokenEmBytes = 64;
+
+    /// <summary>Tamanho do digest SHA-256.</summary>
+    private const int TamanhoDoHashEmBytes = 32;
+
+    /// <summary>
+    /// Validade do refresh token quando <c>Jwt:RefreshTokenDays</c> não é informado.
+    /// Sete dias equilibra: o access token dura 2 horas, então o usuário renova a
+    /// sessão sem reautenticar durante a semana, e um token roubado tem prazo curto.
+    /// </summary>
+    private const int DiasDeValidadeDoRefreshTokenPadrao = 7;
+
     private readonly IConfiguration _configuration;
 
     public TokenService(IConfiguration configuration)
@@ -57,7 +70,55 @@ public class TokenService : ITokenService
     public string GenerateRefreshToken()
     {
         // Cria uma string aleatória segura de 64 bytes
-        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(TamanhoDoRefreshTokenEmBytes));
+    }
+
+    /// <summary>
+    /// SHA-256 do refresh token, em Base64.
+    /// </summary>
+    /// <remarks>
+    /// SHA-256 puro basta aqui — diferente de uma senha, o refresh token é gerado
+    /// pelo servidor com 512 bits de entropia, então não existe espaço de busca a
+    /// ser encarecido por um KDF lento. O que se ganha é que um vazamento da tabela
+    /// <c>AspNetUserTokens</c> não entrega tokens reutilizáveis.
+    /// </remarks>
+    public string HashRefreshToken(string refreshToken)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
+
+        return Convert.ToBase64String(hash);
+    }
+
+    public bool RefreshTokenMatches(string refreshToken, string? storedHash)
+    {
+        if (string.IsNullOrEmpty(refreshToken) || string.IsNullOrEmpty(storedHash))
+        {
+            return false;
+        }
+
+        Span<byte> hashPersistido = stackalloc byte[TamanhoDoHashEmBytes];
+
+        // Hash malformado (truncado, não-Base64, gravado por uma versão anterior em
+        // texto puro) é tratado como não-correspondente, sem lançar exceção.
+        if (!Convert.TryFromBase64String(storedHash, hashPersistido, out var bytesEscritos)
+            || bytesEscritos != TamanhoDoHashEmBytes)
+        {
+            return false;
+        }
+
+        Span<byte> hashRecebido = stackalloc byte[TamanhoDoHashEmBytes];
+        SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken), hashRecebido);
+
+        // Comparação em tempo constante: `!=` entre strings sai no primeiro byte
+        // divergente, e a diferença de tempo permite descobrir o token byte a byte.
+        return CryptographicOperations.FixedTimeEquals(hashRecebido, hashPersistido);
+    }
+
+    public DateTime GetRefreshTokenExpiration()
+    {
+        var dias = _configuration.GetValue("Jwt:RefreshTokenDays", DiasDeValidadeDoRefreshTokenPadrao);
+
+        return DateTime.UtcNow.AddDays(dias);
     }
 
     public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
