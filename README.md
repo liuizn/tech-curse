@@ -215,30 +215,35 @@ sequenceDiagram
 
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :---: | :--- | :---: | :--- |
-| **Auth** | `POST` | `/tech-curse/auth/register` | Público | Registra novo usuário no Identity |
-| **Auth** | `POST` | `/tech-curse/auth/login` | Público | Autentica e retorna JWT Token |
-| **Auth** | `POST` | `/tech-curse/auth/refresh` | Público | Renova Token expirado com Refresh Token |
-| **Courses** | `GET` | `/tech-curse/courses` | Público | Lista catálogo de cursos com paginação e busca |
-| **Courses** | `GET` | `/tech-curse/courses/{id}` | Público | Detalha curso específico |
-| **Courses** | `POST` | `/tech-curse/courses` | `Admin`, `Instructor` | Cria novo curso |
-| **Courses** | `PUT` | `/tech-curse/courses/{id}` | `Admin`, `Instructor` | Atualiza dados de um curso |
-| **Courses** | `DELETE` | `/tech-curse/courses/{id}` | `Admin` | Desativa curso logicamente |
-| **Students** | `GET` | `/tech-curse/students` | `Admin` | Lista estudantes cadastrados (paginado) |
-| **Students** | `GET` | `/tech-curse/students/{id}` | `Admin`, `Self` | Detalha perfil de estudante por ID |
-| **Students** | `GET` | `/tech-curse/students/me` | `Student` | Obtém perfil do aluno autenticado |
-| **Students** | `POST` | `/tech-curse/students` | `Admin`, Público | Cria registro de estudante |
-| **Students** | `PUT` | `/tech-curse/students/{id}` | `Admin`, `Self` | Atualiza dados do estudante |
-| **Students** | `DELETE` | `/tech-curse/students/{id}` | `Admin` | Remove cadastro de estudante |
-| **Enrollments** | `POST` | `/tech-curse/enrollments` | Autenticado | Realiza matrícula em curso |
-| **Enrollments** | `GET` | `/tech-curse/enrollments` | `Admin` | Lista todas as matrículas |
-| **Enrollments** | `GET` | `/tech-curse/enrollments/{id}` | `Admin`, `Self` | Consulta detalhes de uma matrícula |
-| **Payments** | `GET` | `/tech-curse/payment` | `Admin` | Lista pagamentos (paginado) |
-| **Payments** | `GET` | `/tech-curse/payment/{id}` | `Admin`, `Self` | Consulta detalhes de um pagamento |
-| **Payments** | `GET` | `/tech-curse/payment/student/{studentId}` | `Admin`, `Self` | Consulta pagamentos de um aluno |
-| **Payments** | `GET` | `/tech-curse/payment/enrollment/{enrollmentId}` | `Admin`, `Self` | Consulta pagamentos de uma matrícula |
-| **Payments** | `POST` | `/tech-curse/payment` | Autenticado | Registra intenção de pagamento |
-| **Payments** | `POST` | `/tech-curse/payment/process` | Autenticado | Processa pagamento com idempotência |
-| **Payments** | `POST` | `/tech-curse/payment/refund` | `Admin` | Estorna pagamento processado |
+| **Auth** | `POST` | `/tech-curse/Auth/register` | Público | Registra novo usuário no Identity |
+| **Auth** | `POST` | `/tech-curse/Auth/login` | Público | Autentica e retorna access token + refresh token |
+| **Auth** | `POST` | `/tech-curse/Auth/refresh` | Público | Rotaciona o par de tokens |
+| **Course** | `GET` | `/tech-curse/Course` | Autenticado | Lista catálogo com paginação e filtro por categoria |
+| **Course** | `POST` | `/tech-curse/Course` | `Admin`, `Instructor` | Cria novo curso |
+| **Course** | `GET` | `/tech-curse/Course/{id}` | Autenticado | Detalha curso específico |
+| **Course** | `PUT` | `/tech-curse/Course/{id}` | `Admin` | Atualiza dados de um curso |
+| **Course** | `DELETE` | `/tech-curse/Course/{id}` | `Admin` | Remove curso |
+| **Student** | `GET` | `/tech-curse/Student` | `Admin` | Lista estudantes cadastrados (paginado) |
+| **Student** | `POST` | `/tech-curse/Student` | `Admin` | Cria registro de estudante |
+| **Student** | `GET` | `/tech-curse/Student/{id}` | `Admin`, `Self` | Detalha perfil de estudante por ID |
+| **Student** | `GET` | `/tech-curse/Student/{id}/enrollments` | `Admin`, `Self` | Lista as matrículas do estudante |
+| **Student** | `GET` | `/tech-curse/Student/me` | `Student` | Obtém o perfil do aluno autenticado |
+| **Student** | `PUT` | `/tech-curse/Student/{id}` | `Admin`, `Self` | Atualiza dados do estudante |
+| **Student** | `DELETE` | `/tech-curse/Student/{id}` | `Admin` | Remoção lógica do estudante |
+| **Enrollment** | `POST` | `/tech-curse/Enrollment` | Autenticado | Realiza matrícula em curso |
+| **Payment** | `GET` | `/tech-curse/Payment` | `Admin` | Lista pagamentos (paginado) |
+| **Payment** | `GET` | `/tech-curse/Payment/{id}` | `Admin`, `Self` | Consulta detalhes de um pagamento |
+| **Payment** | `GET` | `/tech-curse/Payment/student/{studentId}` | `Admin`, `Self` | Consulta pagamentos de um aluno |
+| **Payment** | `GET` | `/tech-curse/Payment/enrollment/{enrollmentId}` | `Admin`, `Self` | Consulta pagamentos de uma matrícula |
+| **Payment** | `POST` | `/tech-curse/Payment` | `Admin` | Registra intenção de pagamento — exige `Idempotency-Key` |
+| **Payment** | `POST` | `/tech-curse/Payment/process` | `Admin` | Processa pagamento — exige `Idempotency-Key` |
+| **Payment** | `POST` | `/tech-curse/Payment/refund` | `Admin` | Estorna pagamento — exige `Idempotency-Key` |
+| **Health** | `GET` | `/health/live` | Público | Liveness: responde 200 se o processo está de pé |
+| **Health** | `GET` | `/health/ready` | Público | Readiness: agrega SQL Server e Redis. O detalhe por verificação exige `Admin` |
+
+> As rotas usam o nome do controller no singular e em PascalCase (`/tech-curse/Course`, não `/courses`) — é o que `[Route("tech-curse/[controller]")]` produz. O roteamento do ASP.NET não diferencia maiúsculas, mas o plural resulta em 404.
+
+A collection do Postman em [`docs/postman_collection.json`](docs/postman_collection.json) cobre as 25 rotas acima. Importe, rode **Auth > Login** e o script de teste grava o token nas variáveis da collection; as demais requisições o utilizam automaticamente.
 
 ---
 
