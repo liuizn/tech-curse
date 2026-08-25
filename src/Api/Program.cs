@@ -23,6 +23,7 @@ builder.Services.AddSerilogSetup(builder.Configuration);
 builder.Services.AddEFCoreSetup(builder.Configuration);
 builder.Services.AddIdentityAuthenticationSetup(builder.Configuration);
 builder.Services.AddRedisCacheSetup(builder.Configuration);
+builder.Services.AddDataProtectionSetup();
 
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();

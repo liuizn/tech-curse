@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TechCurse.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using TechCurse.Infrastructure.Data;
 namespace TechCurse.Infrastructure.Migrations
 {
     [DbContext(typeof(TechCurseContext))]
-    partial class TechCurseContextModelSnapshot : ModelSnapshot
+    [Migration("20260825021414_PersistenciaDeChavesDeDataProtection")]
+    partial class PersistenciaDeChavesDeDataProtection
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
