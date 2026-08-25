@@ -165,7 +165,8 @@ dotnet run --project src/Api
 
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)
-- **Health Check:** [http://localhost:5130/health](http://localhost:5130/health)
+- **Liveness:** [http://localhost:5130/health/live](http://localhost:5130/health/live) — responde 200 se o processo está de pé, sem consultar dependência alguma
+- **Readiness:** [http://localhost:5130/health/ready](http://localhost:5130/health/ready) — agrega SQL Server e Redis, com JSON detalhado por verificação
 
 ---
 

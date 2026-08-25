@@ -30,7 +30,12 @@ public static class EFCoreSetup
                 });
         });
 
-        services.AddHealthChecks().AddSqlServer(apiConnectionString, name: "Database_SQLServer");
+        // Tag "ready": o banco é dependência para atender tráfego, mas não para
+        // o processo estar vivo. Só entra em /health/ready.
+        services.AddHealthChecks().AddSqlServer(
+            apiConnectionString,
+            name: "Database_SQLServer",
+            tags: [HealthCheckTags.Ready]);
 
         return services;
     }

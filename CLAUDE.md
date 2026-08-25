@@ -38,7 +38,7 @@ Subir a stack completa (API + SQL Server + Redis + Seq). Requer `.env` — copie
 docker-compose up -d --build
 ```
 
-Rodar só as dependências e a API no host (Swagger em http://localhost:5130/swagger, health em `/health`):
+Rodar só as dependências e a API no host (Swagger em http://localhost:5130/swagger, liveness em `/health/live`, readiness em `/health/ready`):
 
 ```bash
 docker-compose up -d db redis seq
@@ -88,6 +88,7 @@ Pontos que se repetem em todo o código:
 - **Autorização**: RBAC por `[Authorize(Roles = "Admin|Instructor|Student")]` no controller; regras de "é o próprio usuário" ficam nos handlers via `ICurrentUserService`. As roles são criadas no startup pelo `DbInitializer`.
 - **Pagamentos**: `PaymentStrategyFactory` resolve a `IPaymentStrategy` pelo `PaymentMethodType`; a elegibilidade é checada por `PaymentProcessableSpecification` antes de chamar o `IPaymentGatewayAdapter`.
 - **Soft delete**: `Student` tem global query filter (`!s.IsDeleted`) no `OnModelCreating`.
+- **Health checks**: `/health/live` é liveness — nenhum check roda (`Predicate = _ => false`), responde texto puro. `/health/ready` é readiness — agrega só os checks marcados com `HealthCheckTags.Ready` (`src/Api/Configuration/HealthCheckTags.cs`) e devolve o JSON detalhado por verificação. Ao registrar uma nova dependência crítica em um `*Setup.cs`, passe `tags: [HealthCheckTags.Ready]`; sem a tag o check não aparece em endpoint nenhum. O smoke test do pipeline sonda `/health/ready`.
 
 ### Configuração
 

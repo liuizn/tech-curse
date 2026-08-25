@@ -163,20 +163,25 @@ jobs:
       - name: Subir a stack para o smoke test
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
 
+      # /health/ready (e nao /health/live): o smoke test quer saber se a API
+      # consegue atender trafego, o que inclui SQL Server e Redis. O liveness
+      # responderia 200 com o banco fora do ar e o teste passaria em falso.
       - name: Aguardar a API ficar saudavel
         run: |
-          echo "Sondando /health (ate 150s)..."
+          echo "Sondando /health/ready (ate 150s)..."
           for attempt in $(seq 1 30); do
-            if curl -fsS http://localhost:8080/health > /dev/null 2>&1; then
-              echo "API saudavel na tentativa ${attempt}."
-              curl -sS http://localhost:8080/health; echo
+            if curl -fsS http://localhost:8080/health/ready > /dev/null 2>&1; then
+              echo "API pronta na tentativa ${attempt}."
+              curl -sS http://localhost:8080/health/ready; echo
               exit 0
             fi
             sleep 5
           done
-          echo "A API nao ficou saudavel dentro do limite."
-          echo "Resposta de /health (agora com o detalhe por verificacao):"
-          curl -sS -i http://localhost:8080/health || true
+          echo "A API nao ficou pronta dentro do limite."
+          echo "Liveness (o processo chegou a subir?):"
+          curl -sS -i http://localhost:8080/health/live || true
+          echo "Resposta de /health/ready (com o detalhe por verificacao):"
+          curl -sS -i http://localhost:8080/health/ready || true
           exit 1
 
       - name: Diagnostico em caso de falha
