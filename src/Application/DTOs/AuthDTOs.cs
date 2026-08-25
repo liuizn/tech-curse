@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using TechCurse.Domain.Enums;
 
 namespace TechCurse.Application.DTOs;

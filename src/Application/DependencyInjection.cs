@@ -1,10 +1,10 @@
+using System.Reflection;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
+using TechCurse.Application.Common.Behaviors;
 using TechCurse.Application.Factory;
 using TechCurse.Application.Interfaces;
 using TechCurse.Application.Strategies;
-using TechCurse.Application.Common.Behaviors;
 
 namespace TechCurse.Application
 {

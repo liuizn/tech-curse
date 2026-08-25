@@ -23,10 +23,10 @@ public class ProcessPaymentCommandHandler : IRequestHandler<ProcessPaymentComman
     private const string PAYMENT_BY_ENROLLMENT_PREFIX = "payments:enrollment:";
 
     public ProcessPaymentCommandHandler(
-        IPaymentRepository paymentRepository, 
-        IPaymentGatewayAdapter paymentGateway, 
-        PaymentStrategyFactory strategyFactory, 
-        ICacheService cacheService, 
+        IPaymentRepository paymentRepository,
+        IPaymentGatewayAdapter paymentGateway,
+        PaymentStrategyFactory strategyFactory,
+        ICacheService cacheService,
         ILogger<ProcessPaymentCommandHandler> logger)
     {
         _paymentRepository = paymentRepository;

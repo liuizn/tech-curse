@@ -1,4 +1,4 @@
-﻿namespace TechCurse.Domain.Entities;
+namespace TechCurse.Domain.Entities;
 
 public class Enrollment
 {

@@ -1,14 +1,14 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TechCurse.Application.DTOs;
-using TechCurse.Application.Interfaces;
-using MediatR;
 using TechCurse.Application.Features.Courses.Commands.CreateCourse;
-using TechCurse.Application.Features.Courses.Queries.GetCourses;
-using TechCurse.Application.Features.Courses.Queries.GetCourseById;
-using TechCurse.Application.Features.Courses.Commands.UpdateCourse;
 using TechCurse.Application.Features.Courses.Commands.DeleteCourse;
+using TechCurse.Application.Features.Courses.Commands.UpdateCourse;
+using TechCurse.Application.Features.Courses.Queries.GetCourseById;
+using TechCurse.Application.Features.Courses.Queries.GetCourses;
+using TechCurse.Application.Interfaces;
 
 namespace TechCurse.Api.Controllers;
 

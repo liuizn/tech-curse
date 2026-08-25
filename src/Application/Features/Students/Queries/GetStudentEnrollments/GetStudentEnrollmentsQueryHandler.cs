@@ -12,7 +12,7 @@ public class GetStudentEnrollmentsQueryHandler : IRequestHandler<GetStudentEnrol
     private readonly ICurrentUserService _currentUserService;
 
     public GetStudentEnrollmentsQueryHandler(
-        IStudentRepository studentRepository, 
+        IStudentRepository studentRepository,
         ICurrentUserService currentUserService)
     {
         _studentRepository = studentRepository;
@@ -33,7 +33,7 @@ public class GetStudentEnrollmentsQueryHandler : IRequestHandler<GetStudentEnrol
     public async Task<IEnumerable<CourseStudentOutputDto>> Handle(GetStudentEnrollmentsQuery request, CancellationToken cancellationToken)
     {
         var student = await _studentRepository.GetByIdAsync(request.Id);
-        
+
         if (student == null || student.IsDeleted)
         {
             throw new NotFoundException("Estudante não encontrado.");

@@ -1,4 +1,4 @@
-﻿using Serilog.Context;
+using Serilog.Context;
 
 namespace TechCurse.Api.Middleware;
 
@@ -13,7 +13,7 @@ public class CorrelationIdMiddleware
     }
 
     public async Task InvokeAsync(HttpContext context)
-    {        
+    {
         var correlationId = context.Request.Headers[CorrelationIdHeaderName].FirstOrDefault()
                             ?? Guid.NewGuid().ToString();
 

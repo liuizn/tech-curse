@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using TechCurse.Application.DTOs;
 
 namespace TechCurse.Application.Interfaces;

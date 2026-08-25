@@ -12,7 +12,7 @@ public class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQuery, S
     private readonly ICurrentUserService _currentUserService;
 
     public GetStudentByIdQueryHandler(
-        IStudentRepository studentRepository, 
+        IStudentRepository studentRepository,
         ICurrentUserService currentUserService)
     {
         _studentRepository = studentRepository;
@@ -37,7 +37,7 @@ public class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQuery, S
         // já estivesse no Cache. O BD será sempre consultado para garantir a segurança. O lookup por PK é leve o suficiente.
 
         var student = await _studentRepository.GetByIdAsync(request.Id);
-        
+
         if (student == null || student.IsDeleted)
         {
             throw new NotFoundException("Estudante não encontrado.");

@@ -1,4 +1,4 @@
-﻿namespace TechCurse.Application.DTOs;
+namespace TechCurse.Application.DTOs;
 
 public record PaginationParamsDto
 {

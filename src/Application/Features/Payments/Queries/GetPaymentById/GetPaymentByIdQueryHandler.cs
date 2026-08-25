@@ -23,7 +23,7 @@ public class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQuery, P
     public async Task<PaymentOutputDto> Handle(GetPaymentByIdQuery request, CancellationToken cancellationToken)
     {
         var cacheKey = $"{PAYMENT_ITEM_PREFIX}{request.Id}";
-        
+
         var payment = await _paymentRepository.GetByIdAsync(request.Id);
         if (payment == null) throw new NotFoundException("Pagamento não encontrado.");
 
@@ -33,7 +33,7 @@ public class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQuery, P
         if (cached != null) return cached;
 
         var dto = new PaymentOutputDto(
-            payment.PaymentId, payment.EnrollmentId, payment.StudentId, payment.Amount, payment.Status, 
+            payment.PaymentId, payment.EnrollmentId, payment.StudentId, payment.Amount, payment.Status,
             payment.IsActive, payment.CreatedAt, payment.PaidAt, payment.ExternalTransactionId
         );
 

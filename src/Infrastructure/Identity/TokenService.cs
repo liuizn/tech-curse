@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Exceptions;
@@ -36,7 +36,7 @@ public class TokenService : ITokenService
         }
 
         var expiresAt = DateTime.UtcNow.AddHours(2);
-        
+
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SigningKey"]!);
         var credential = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature);
 
@@ -61,7 +61,7 @@ public class TokenService : ITokenService
     }
 
     public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
-    {        
+    {
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SigningKey"]!);
 
         var tokenValidationParameters = new TokenValidationParameters

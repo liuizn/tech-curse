@@ -1,5 +1,5 @@
-﻿using TechCurse.Application.DTOs;
-using TechCurse.Domain.Entities; 
+using TechCurse.Application.DTOs;
+using TechCurse.Domain.Entities;
 
 namespace TechCurse.Application.Interfaces;
 

@@ -26,7 +26,7 @@ public class GetPaymentsByEnrollmentIdQueryHandler : IRequestHandler<GetPayments
         var cacheKey = $"{PAYMENT_BY_ENROLLMENT_PREFIX}{enrollmentId}";
 
         var payments = await _paymentRepository.GetByEnrollmentIdAsync(enrollmentId);
-        
+
         var student = payments.FirstOrDefault()?.Enrollment.Student;
         if (student == null) throw new NotFoundException("Matrícula não encontrada ou sem estudante associado.");
 
@@ -36,12 +36,12 @@ public class GetPaymentsByEnrollmentIdQueryHandler : IRequestHandler<GetPayments
         if (cached != null) return cached;
 
         var dtos = payments.Select(p => new PaymentOutputDto(
-            p.PaymentId, p.EnrollmentId, p.StudentId, p.Amount, p.Status, 
+            p.PaymentId, p.EnrollmentId, p.StudentId, p.Amount, p.Status,
             p.IsActive, p.CreatedAt, p.PaidAt, p.ExternalTransactionId
         )).ToList();
 
         await _cacheService.SetAsync(cacheKey, dtos, TimeSpan.FromMinutes(15));
-        
+
         return dtos;
     }
 

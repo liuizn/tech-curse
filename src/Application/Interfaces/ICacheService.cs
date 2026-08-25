@@ -1,4 +1,4 @@
-﻿namespace TechCurse.Application.Interfaces;
+namespace TechCurse.Application.Interfaces;
 
 public interface ICacheService
 {

@@ -1,16 +1,16 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TechCurse.Application.DTOs;
-using TechCurse.Application.Interfaces;
-using MediatR;
 using TechCurse.Application.Features.Students.Commands.CreateStudent;
-using TechCurse.Application.Features.Students.Queries.GetStudents;
+using TechCurse.Application.Features.Students.Commands.DeleteStudent;
+using TechCurse.Application.Features.Students.Commands.UpdateStudent;
+using TechCurse.Application.Features.Students.Queries.GetSelfStudent;
 using TechCurse.Application.Features.Students.Queries.GetStudentById;
 using TechCurse.Application.Features.Students.Queries.GetStudentEnrollments;
-using TechCurse.Application.Features.Students.Queries.GetSelfStudent;
-using TechCurse.Application.Features.Students.Commands.UpdateStudent;
-using TechCurse.Application.Features.Students.Commands.DeleteStudent;
+using TechCurse.Application.Features.Students.Queries.GetStudents;
+using TechCurse.Application.Interfaces;
 
 namespace TechCurse.Api.Controllers;
 
@@ -55,7 +55,7 @@ public class StudentController : ControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, "Retorna a lista paginada.", typeof(PagedResultDto<StudentOutputDto>))]
     [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuário não autenticado.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status403Forbidden, "Acesso negado.", typeof(ProblemDetails))]
-    public async Task<IActionResult> GetAll([FromQuery]PaginationParamsDto searchParams)
+    public async Task<IActionResult> GetAll([FromQuery] PaginationParamsDto searchParams)
     {
         var query = new GetStudentsQuery(searchParams);
         var result = await _mediator.Send(query);

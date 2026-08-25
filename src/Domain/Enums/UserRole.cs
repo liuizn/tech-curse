@@ -1,4 +1,4 @@
-﻿namespace TechCurse.Domain.Enums;
+namespace TechCurse.Domain.Enums;
 
 public enum UserRole
 {

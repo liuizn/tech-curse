@@ -1,9 +1,9 @@
-﻿namespace TechCurse.Domain.Entities;
+namespace TechCurse.Domain.Entities;
 
 public class Course
 {
     public int CourseId { get; set; }
-    public required string Titulo{ get; set; }
+    public required string Titulo { get; set; }
     public required string Descricao { get; set; }
     public required string Categoria { get; set; }
     public required int CargaHoraria { get; set; }

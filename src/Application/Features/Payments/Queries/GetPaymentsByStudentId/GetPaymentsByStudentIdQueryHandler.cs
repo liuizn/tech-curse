@@ -39,13 +39,13 @@ public class GetPaymentsByStudentIdQueryHandler : IRequestHandler<GetPaymentsByS
         var (items, totalCount) = await _paymentRepository.GetByStudentIdAsync(studentId, searchParams);
 
         var dtos = items.Select(p => new PaymentOutputDto(
-            p.PaymentId, p.EnrollmentId, p.StudentId, p.Amount, p.Status, 
+            p.PaymentId, p.EnrollmentId, p.StudentId, p.Amount, p.Status,
             p.IsActive, p.CreatedAt, p.PaidAt, p.ExternalTransactionId
         ));
 
         var result = new PagedResultDto<PaymentOutputDto>(dtos, totalCount, searchParams.PageNumber, searchParams.PageSize);
         await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));
-        
+
         return result;
     }
 

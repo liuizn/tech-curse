@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+using System.Reflection.Emit;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 using TechCurse.Domain.Entities;
 
 namespace TechCurse.Infrastructure.Data;
