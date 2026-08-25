@@ -1,91 +1,229 @@
 name: CI/CD Pipeline - Tech Curse API
 
-# Gatilhos: Roda em todo PR e em todo push/merge direto
 on:
   push:
-    branches: [ "main", "v1.2" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main", "v1.2" ]
+    branches: ["main"]
+
+# Permissao padrao do workflow: so leitura. O job que publica no GHCR
+# eleva a permissao localmente (packages: write).
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  SOLUTION: TechCurse.slnx
+  API_PROJECT: src/Api/TechCurse.Api.csproj
+  REGISTRY: ghcr.io
+  LOCAL_IMAGE: tech-curse-api:ci
 
 jobs:
-  # ==========================================
-  # JOB 1: RESTORE, BUILD, TESTES E PUBLICAÇÃO
-  # ==========================================
+  # ============================================================
+  # JOB 1 — Build, testes e artefato de publicacao
+  # ============================================================
   build-and-test:
     name: Build, Tests and Publish
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
+      - name: Checkout do codigo
         uses: actions/checkout@v4
 
-      - name: Configurar .NET 10
+      - name: Configurar .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore TechCurse.slnx
+      - name: Cache de pacotes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }}
 
       - name: Build
-        run: dotnet build TechCurse.slnx --configuration Release --no-restore
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release --no-restore
 
-      - name: Unit and Integration Tests
-        # Executa os testes isolados e de integração presentes na sua solution
-        run: dotnet test TechCurse.slnx --configuration Release --no-build --verbosity normal
+      - name: Testes
+        run: |
+          dotnet test ${{ env.SOLUTION }} \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=test-results.trx" \
+            --logger "console;verbosity=normal" \
+            --collect "XPlat Code Coverage" \
+            --results-directory ./test-results
 
-      - name: Publish Artifacts
-        run: dotnet publish src/Api/TechCurse.Api.csproj -c Release -o ./publish_output /p:UseAppHost=false
+      - name: Publicar resultados de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./test-results
+          retention-days: 14
 
-      - name: Upload Build Artifact
+      - name: Auditoria de pacotes vulneraveis
+        run: |
+          dotnet list ${{ env.SOLUTION }} package --vulnerable --include-transitive \
+            > vulnerable.txt 2>&1 || true
+          cat vulnerable.txt
+          if grep -qiE "\bHigh\b|\bCritical\b" vulnerable.txt; then
+            echo "::warning title=Pacotes vulneraveis::Foram encontrados pacotes com severidade alta ou critica."
+          fi
+
+      - name: Publish
+        run: |
+          dotnet publish ${{ env.API_PROJECT }} \
+            -c Release \
+            -o ./publish_output \
+            -p:UseAppHost=false
+
+      - name: Upload do artefato publicado
         uses: actions/upload-artifact@v4
         with:
           name: api-published-app
           path: ./publish_output
+          retention-days: 14
 
-  # ==========================================
-  # JOB 2: DOCKER IMAGE BUILD, PUSH E SMOKE TEST
-  # ==========================================
-  build-and-push-image:
-    name: Docker Build and Push
+  # ============================================================
+  # JOB 2 — Imagem Docker: build, smoke test e SO ENTAO publish
+  # ============================================================
+  docker:
+    name: Docker Build, Smoke Test and Push
     needs: build-and-test
-    # Condição: Este job SÓ executa se o Job 1 passar E se for um push/merge (ignora em PRs soltos)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v1.2')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
+    # Eleva a permissao apenas aqui. O GITHUB_TOKEN embutido substitui
+    # DOCKERHUB_USERNAME e DOCKERHUB_TOKEN: nao ha mais segredo de registry
+    # para gerenciar ou rotacionar.
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - name: Checkout do código
+      - name: Checkout do codigo
         uses: actions/checkout@v4
 
-      - name: Login no Docker Hub
-        uses: docker/login-action@v3
-        with:
-          # Lendo os segredos armazenados de forma segura no GitHub
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      # O GHCR exige o nome da imagem inteiramente em minusculas, e o dono
+      # deste repositorio e "Liuizn" (com maiuscula). Sem esta normalizacao
+      # o push falha com "invalid reference format".
+      - name: Normalizar nome da imagem
+        id: img
+        run: |
+          echo "name=${REGISTRY}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Definir tags da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.img.outputs.name }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=Tech Curse API
+            org.opencontainers.image.description=API REST de gestao de cursos, matriculas e pagamentos
+
+      - name: Build da imagem (sem publicar)
+        uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tech-curse-api:latest
+          load: true
+          push: false
+          tags: ${{ env.LOCAL_IMAGE }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Smoke Test (Validação do Container)
-        # Cria o .env dinamicamente com os segredos, sobe a stack e bate no Health Check
+      - name: Subir a stack para o smoke test
+        env:
+          API_IMAGE: ${{ env.LOCAL_IMAGE }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          SEQ_PASSWORD: ${{ secrets.SEQ_PASSWORD }}
+          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          JWT_ISSUER: GitHubActions_Issuer
+          JWT_AUDIENCE: GitHubActions_Audience
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
+
+      - name: Aguardar a API ficar saudavel
         run: |
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
-          echo "JWT_SIGNING_KEY=${{ secrets.JWT_SIGNING_KEY }}" >> .env
-          echo "JWT_ISSUER=GitHubActions_Issuer" >> .env
-          echo "JWT_AUDIENCE=GitHubActions_Audience" >> .env
-          echo "SEQ_PASSWORD=${{ secrets.SEQ_PASSWORD }}" >> .env
-          
-          echo "Iniciando a orquestração do docker-compose para o Smoke Test..."
-          docker compose up -d
-          
-          echo "Aguardando 20 segundos para a API, DB, Redis e Seq inicializarem as portas..."
-          sleep 20
-          
-          echo "Disparando requisição contra o endpoint de Health Check..."
-          curl --fail http://localhost:8080/health || exit 1
+          echo "Sondando /health (ate 150s)..."
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/health > /dev/null 2>&1; then
+              echo "API saudavel na tentativa ${attempt}."
+              curl -sS http://localhost:8080/health; echo
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "A API nao ficou saudavel dentro do limite."
+          echo "Resposta de /health (agora com o detalhe por verificacao):"
+          curl -sS -i http://localhost:8080/health || true
+          exit 1
+
+      - name: Diagnostico em caso de falha
+        if: failure()
+        env:
+          API_IMAGE: ${{ env.LOCAL_IMAGE }}
+        run: |
+          COMPOSE="docker compose -f docker-compose.yml -f docker-compose.ci.yml"
+          echo "===== estado dos servicos ====="
+          $COMPOSE ps
+          echo "===== logs: api ====="
+          $COMPOSE logs --no-color --tail 200 api
+          echo "===== logs: db ====="
+          $COMPOSE logs --no-color --tail 100 db
+          echo "===== logs: redis ====="
+          $COMPOSE logs --no-color --tail 50 redis
+
+      - name: Derrubar a stack
+        if: always()
+        env:
+          API_IMAGE: ${{ env.LOCAL_IMAGE }}
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v
+
+      # Login no GHCR com o token embutido do proprio workflow.
+      # github.actor e quem disparou a execucao; o token tem escopo do repo.
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # tag + push (em vez de rebuildar com push: true) garante que os bits
+      # publicados sao exatamente os que passaram no smoke test.
+      - name: Publicar a imagem validada
+        run: |
+          echo "${{ steps.meta.outputs.tags }}" | while read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "Publicando ${tag}"
+            docker tag "${{ env.LOCAL_IMAGE }}" "$tag"
+            docker push "$tag"
+          done
+
+      - name: Resumo da execucao
+        run: |
+          {
+            echo "### Imagem publicada no GHCR"
+            echo ""
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo ""
+            echo "Pacote: https://github.com/${{ github.repository }}/pkgs/container/tech-curse"
+          } >> "$GITHUB_STEP_SUMMARY"
