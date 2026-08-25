@@ -3,7 +3,10 @@
 # ===================================================
 # 1. RUNTIME BASE (Imagem Chiseled Ultraleve e Segura)
 # ===================================================
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS base
+# Variante "-extra": chiseled (sem shell, sem gerenciador de pacotes, non-root),
+# porem com ICU. A variante sem "-extra" nao traz ICU, e o Microsoft.Data.SqlClient
+# recusa operar sem globalizacao — era a causa do 503 no /health.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS base
 USER app
 WORKDIR /app
 EXPOSE 8080

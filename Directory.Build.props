@@ -9,7 +9,14 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <!--
+      InvariantGlobalization NAO pode ser habilitado: o Microsoft.Data.SqlClient
+      lanca NotSupportedException("Globalization Invariant Mode is not supported")
+      ao abrir conexao, derrubando tanto o Migrate() do startup quanto o health
+      check Database_SQLServer. Por isso a imagem runtime precisa ser a variante
+      chiseled "-extra", que inclui o ICU.
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
 </Project>

@@ -110,6 +110,18 @@ jobs:
       contents: read
       packages: write
 
+    # Definido no job, e nao passo a passo: os tres comandos de compose (up,
+    # logs, down) precisam da mesma interpolacao. Sem isso o docker compose
+    # emite "variable is not set" e polui justamente o log de diagnostico.
+    env:
+      API_IMAGE: tech-curse-api:ci
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+      SEQ_PASSWORD: ${{ secrets.SEQ_PASSWORD }}
+      JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+      JWT_ISSUER: GitHubActions_Issuer
+      JWT_AUDIENCE: GitHubActions_Audience
+
     steps:
       - name: Checkout do codigo
         uses: actions/checkout@v4
@@ -149,14 +161,6 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Subir a stack para o smoke test
-        env:
-          API_IMAGE: ${{ env.LOCAL_IMAGE }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          SEQ_PASSWORD: ${{ secrets.SEQ_PASSWORD }}
-          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
-          JWT_ISSUER: GitHubActions_Issuer
-          JWT_AUDIENCE: GitHubActions_Audience
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
 
       - name: Aguardar a API ficar saudavel
@@ -177,8 +181,6 @@ jobs:
 
       - name: Diagnostico em caso de falha
         if: failure()
-        env:
-          API_IMAGE: ${{ env.LOCAL_IMAGE }}
         run: |
           COMPOSE="docker compose -f docker-compose.yml -f docker-compose.ci.yml"
           echo "===== estado dos servicos ====="
@@ -192,8 +194,6 @@ jobs:
 
       - name: Derrubar a stack
         if: always()
-        env:
-          API_IMAGE: ${{ env.LOCAL_IMAGE }}
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v
 
       # Login no GHCR com o token embutido do proprio workflow.
