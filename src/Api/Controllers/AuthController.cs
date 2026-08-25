@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Swashbuckle.AspNetCore.Annotations;
+using TechCurse.Api.Configuration;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Interfaces;
 
@@ -10,6 +12,9 @@ namespace TechCurse.Api.Controllers;
 [Consumes("application/json")]
 [Produces("application/json")]
 [Tags("Auth")]
+// Política mais restritiva que a global: estes são os únicos endpoints públicos
+// que aceitam credenciais, e portanto os únicos alvos de força bruta.
+[EnableRateLimiting(RateLimitingSetup.PoliticaAutenticacao)]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -27,6 +32,7 @@ public class AuthController : ControllerBase
     [SwaggerResponse(StatusCodes.Status201Created, "Usuário registrado com sucesso.")]
     [SwaggerResponse(StatusCodes.Status409Conflict, "Conflito. O e-mail informado já está em uso.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "Erro de validação nos campos enviados.", typeof(ProblemDetails))]
+    [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de requisições de autenticação excedido.", typeof(ProblemDetails))]
     public async Task<IActionResult> Register([FromBody] RegisterInputDto input)
     {
         var actionResult = await _authService.RegisterAsync(input);
@@ -42,6 +48,7 @@ public class AuthController : ControllerBase
     [SwaggerResponse(StatusCodes.Status200OK, "Autenticação bem-sucedida. Retorna o Token JWT.", typeof(AuthOutputDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Credenciais inválidas.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuário não autenticado ou inativo.", typeof(ProblemDetails))]
+    [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de tentativas de login excedido.", typeof(ProblemDetails))]
     public async Task<IActionResult> Login([FromBody] LoginInputDto input)
     {
         var authResult = await _authService.LoginAsync(input);
@@ -56,6 +63,7 @@ public class AuthController : ControllerBase
     )]
     [SwaggerResponse(StatusCodes.Status200OK, "Token atualizado com sucesso.", typeof(TokenOutputDto))]
     [SwaggerResponse(StatusCodes.Status401Unauthorized, "Refresh token expirado ou inválido.", typeof(ProblemDetails))]
+    [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de requisições de autenticação excedido.", typeof(ProblemDetails))]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenInputDto input)
     {
         var refreshResult = await _authService.RefreshAsync(input);
