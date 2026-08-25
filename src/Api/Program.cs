@@ -64,17 +64,22 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
     Predicate = _ => false
 });
 
-// Readiness: "dá para receber tráfego?". Agrega apenas os checks marcados com a
-// tag "ready" (banco e cache). O writer padrão responde apenas
-// "Healthy"/"Unhealthy" em texto puro, sem dizer qual verificação falhou;
-// detalhar por check é o que torna um 503 diagnosticável no pipeline, onde só se
-// enxerga a resposta HTTP.
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = registration => registration.Tags.Contains(HealthCheckTags.Ready),
     ResponseWriter = async (context, report) =>
     {
         context.Response.ContentType = "application/json; charset=utf-8";
+
+        if (!context.User.IsInRole("Admin"))
+        {
+            await context.Response.WriteAsJsonAsync(new
+            {
+                status = report.Status.ToString()
+            });
+
+            return;
+        }
 
         await context.Response.WriteAsJsonAsync(new
         {

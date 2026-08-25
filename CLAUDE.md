@@ -2,7 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> O projeto é documentado e comentado em **português brasileiro**. Mantenha commits, comentários, mensagens de exceção e documentação em pt-BR.
+> O projeto é documentado em **português brasileiro**. Mantenha commits, mensagens de exceção e documentação em pt-BR.
+
+> **Não escreva comentários no código.** Ao criar ou reescrever qualquer arquivo, não inclua comentário de nenhum tipo — nem de rodapé, nem XML doc, nem explicação de decisão de design. A justificativa de uma escolha vai na resposta da conversa ou na mensagem de commit, nunca dentro do arquivo-fonte. Isto vale também para instruções passadas a subagentes. Documentação em arquivos `.md` segue normalmente.
 
 ## Visão geral
 
@@ -87,11 +89,11 @@ Pontos que se repetem em todo o código:
 - **Idempotência**: endpoints de escrita de pagamento usam `[TypeFilter(typeof(IdempotencyFilterMiddleware))]`; o header `Idempotency-Key` é **obrigatório** (ausência → 400) e a resposta é replayed do Redis por 6 minutos.
 - **Autorização**: RBAC por `[Authorize(Roles = "Admin|Instructor|Student")]` no controller; regras de "é o próprio usuário" ficam nos handlers via `ICurrentUserService`. As roles são criadas no startup pelo `DbInitializer`.
 - **Pagamentos**: `PaymentStrategyFactory` resolve a `IPaymentStrategy` pelo `PaymentMethodType`; a elegibilidade é checada por `PaymentProcessableSpecification` antes de chamar o `IPaymentGatewayAdapter`.
-- **Soft delete**: `Student` tem global query filter (`!s.IsDeleted`) no `OnModelCreating`.
+- **Soft delete**: `Student` tem global query filter (`!s.IsDeleted`) no `OnModelCreating`. Consultas de `Payment` que usam navegação chamam `IgnoreQueryFilters()` — ver a seção "Soft delete: decisão tomada".
 - **Rate limiting**: `RateLimitingSetup` registra um limiter global (por usuário autenticado, ou por IP quando anônimo) e a política nomeada `RateLimitingSetup.PoliticaAutenticacao`, aplicada ao `AuthController` via `[EnableRateLimiting]`. O `UseRateLimiter()` fica entre `UseAuthentication()` e `UseAuthorization()`, e a rejeição devolve `ProblemDetails` 429 no mesmo formato do `ExceptionHandlingMiddleware`.
 - **Refresh token**: o `AuthService` persiste em `AspNetUserTokens` o **SHA-256** do refresh token (`JWTApp`/`RefreshToken`) e a expiração ISO-8601 (`JWTApp`/`RefreshTokenExpiry`). A comparação no `/refresh` é feita em tempo constante por `ITokenService.RefreshTokenMatches`. O valor em texto puro só existe na resposta HTTP.
 - **Data Protection**: o chaveiro é persistido no banco (`TechCurseContext : IDataProtectionKeyContext`, tabela `DataProtectionKeys`), com `SetApplicationName` fixo — nada de chaves efêmeras no filesystem do container.
-- **Health checks**: `/health/live` é liveness — nenhum check roda (`Predicate = _ => false`), responde texto puro. `/health/ready` é readiness — agrega só os checks marcados com `HealthCheckTags.Ready` (`src/Api/Configuration/HealthCheckTags.cs`) e devolve o JSON detalhado por verificação. Ao registrar uma nova dependência crítica em um `*Setup.cs`, passe `tags: [HealthCheckTags.Ready]`; sem a tag o check não aparece em endpoint nenhum. O smoke test do pipeline sonda `/health/ready`.
+- **Health checks**: `/health/live` é liveness — nenhum check roda (`Predicate = _ => false`), responde texto puro. `/health/ready` é readiness — agrega só os checks marcados com `HealthCheckTags.Ready` (`src/Api/Configuration/HealthCheckTags.cs`) e devolve **apenas o status agregado** para quem não é Admin; o JSON detalhado por verificação (nome, duração, descrição e mensagem de erro de cada check) só sai para quem chega com JWT de role `Admin`, porque a mensagem de erro carrega endereço e nome de servidor. A distinção é feita no `ResponseWriter` via `context.User.IsInRole("Admin")`, e não com `RequireAuthorization()`, porque sonda de readiness — do pipeline ou de orquestrador — não autentica. Ao registrar uma nova dependência crítica em um `*Setup.cs`, passe `tags: [HealthCheckTags.Ready]`; sem a tag o check não aparece em endpoint nenhum. O smoke test do pipeline sonda `/health/ready`.
 
 ### Configuração
 
@@ -116,36 +118,41 @@ Quatro projetos em `tests/`, todos xUnit + FluentAssertions. Cada um referencia 
 
 Ao criar uma nova slice, o caminho completo é: `Command`/`Query` + `Handler` + `Validator` na pasta da feature → interface de repositório em `Application/Interfaces` → implementação em `Infrastructure/Repositories` (registrada em `Infrastructure/DependencyInjection.cs`) → action no controller com `SwaggerOperation`/`SwaggerResponse` → testes unitários do handler e do validator.
 
+Pastas do projeto de integração e o que cada uma protege:
+
+| Pasta | Cobre |
+| --- | --- |
+| `Endpoints/` | rotas HTTP ponta a ponta, incluindo `PaymentNavigationTests` (as navegações que já estouraram `NullReferenceException`) e `HealthEndpointTests` (liveness, readiness e o corte de detalhe por role) |
+| `Middlewares/` | correlation id, tratamento de exceção e idempotência |
+| `Persistence/` | `TechCurseContext` direto, sem host HTTP — inclui `MigrationDriftTests`, que falha se uma entidade mudar sem migration correspondente |
+| `Composition/` | montagem do container e do host: o abort em Production sem gateway real, e a recusa de subir quando o banco relacional está inalcançável |
+| `Fixtures/` | factories e dublês |
+
 ## Armadilhas conhecidas
 
 - **Migrations vivem em `src/Infrastructure/Migrations/`** (namespace `TechCurse.Infrastructure.Migrations`), mesmo assembly do `TechCurseContext` — por isso não é preciso configurar `MigrationsAssembly()`. O EF localiza migrations pelos atributos `[DbContext]`/`[Migration]`, não por convenção de diretório. Nada fora de `src/` entra em compilação, e o `Dockerfile` copia apenas `src/`: arquivo de código colocado fora dessa árvore é silenciosamente ignorado pelo build.
 - **`Student` tem query filter global (`!IsDeleted`) e é a ponta obrigatória** dos relacionamentos com `Enrollment` e `Payment`, que não têm filtro equivalente. O EF sinaliza isso com `PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning`, emitido na construção do modelo (runtime / comandos `dotnet ef`) — **não** na saída do compilador. Ver a seção "Soft delete: decisão em aberto" abaixo antes de mexer em qualquer query de `Payment` ou `Enrollment`.
-- **Propriedades de entidade usam `= null!` / `= string.Empty`** em vez de `required`: navegações são preenchidas pelo EF, e `required` quebraria os object initializers espalhados pelos testes. O build roda com **zero warnings** — se um `dotnet build` seu passar a emitir CS86xx, é código novo, não ruído herdado.
+- **Navegações usam `= null!`**, mas escalares obrigatórios variam: `Course` declara `Titulo`, `Descricao`, `Categoria` e `CargaHoraria` como `required`, enquanto `Student` e `Payment` usam `= null!` / `= string.Empty`. Ao montar entidade em teste, confira qual convenção aquela classe segue antes de escrever o object initializer. O build roda com **zero warnings** — se um `dotnet build` seu passar a emitir CS86xx, é código novo, não ruído herdado.
 
-## Soft delete: decisão em aberto
+## Soft delete: decisão tomada
+
+Opção escolhida: **restringir o filtro global ao agregado `Student` e usar `IgnoreQueryFilters()` nas consultas de `Payment` que precisam da navegação.** O histórico financeiro é preservado — um aluno removido não faz pagamentos sumirem de relatório.
 
 Comportamento **medido** (EF InMemory, contexto limpo), não suposto:
 
 | Consulta | Aluno ativo | Aluno soft-deleted |
 | --- | --- | --- |
-| `_context.Payments...` (sem join) | traz o pagamento | **traz o pagamento** |
+| `_context.Payments...` (sem join) | traz o pagamento | traz o pagamento |
 | `.Include(p => p.Student)` | traz o pagamento | **o pagamento some por inteiro** |
-| `.Where(p => p.Student.Nome == x)` | traz o pagamento | **o pagamento some por inteiro** |
+| `.Include(...).IgnoreQueryFilters()` | traz o pagamento | traz o pagamento |
 
-A navegação `Payment.Student` é obrigatória, então o EF traduz o `Include` em `INNER JOIN`; o filtro `!IsDeleted` no `Student` elimina a linha do lado de fora. O resultado é que hoje o sistema é **incoerente consigo mesmo**: `PaymentRepository.GetPagedAsync` e `GetByStudentIdAsync` (sem join) continuam listando pagamentos de alunos removidos, mas qualquer consulta que toque a navegação os apaga silenciosamente.
+A navegação `Payment.Student` é obrigatória, então o EF traduz o `Include` em `INNER JOIN`; o filtro `!IsDeleted` no `Student` elimina a linha do lado de fora. `IgnoreQueryFilters()` desliga o filtro para aquela query.
 
-**Duas armadilhas concretas já presentes no código** (`src/Infrastructure/Repositories/PaymentRepository.cs`):
+**Regra ao mexer em `PaymentRepository`:** todo `Include` que atravesse `Student` — direta ou indiretamente, como `Enrollment.Student` — precisa vir acompanhado de `IgnoreQueryFilters()`. Sem ele, a linha some silenciosamente para aluno removido; sem o `Include`, a navegação vem `null` e o handler estoura com `NullReferenceException`. Hoje só `GetByIdAsync` e `GetByEnrollmentIdAsync` usam navegação; `GetPagedAsync` e `GetByStudentIdAsync` não, e por isso não têm nenhum dos dois.
 
-- `GetByIdAsync` usa `AsNoTracking()` **sem `Include`**, e `GetPaymentByIdQueryHandler` lê `payment.Student.IdentityUserId`. Sem lazy loading (o pacote `Microsoft.EntityFrameworkCore.Proxies` está referenciado, mas `UseLazyLoadingProxies()` nunca é chamado e as navegações não são `virtual`), `payment.Student` é **null** — `NullReferenceException`. Os testes unitários não pegam isso porque mockam `IPaymentRepository` devolvendo um `Payment` com `Student` preenchido à mão.
-- `GetByEnrollmentIdAsync` tem o mesmo problema com `Enrollment`, lido em `GetPaymentsByEnrollmentIdQueryHandler` via `.Enrollment.Student`.
+Não há lazy loading para salvar de um `Include` esquecido: `Microsoft.EntityFrameworkCore.Proxies` está referenciado, mas `UseLazyLoadingProxies()` nunca é chamado e as navegações não são `virtual`.
 
-O `Include` que corrige essas duas é exatamente o que ativa a interação com o query filter — por isso as duas questões precisam ser resolvidas juntas, e a escolha é **de produto**:
-
-1. **Propagar o soft delete** — dar filtro `!Student.IsDeleted` a `Enrollment` e `Payment`. Coerente e previsível, mas some com o histórico financeiro do aluno removido: relatórios de faturamento e conciliação passam a não fechar retroativamente quando alguém é removido.
-2. **Restringir o filtro ao agregado `Student`** e usar `IgnoreQueryFilters()` nas consultas de `Payment`/`Enrollment` que precisam da navegação. Preserva o histórico, mas expõe dados de aluno removido por um caminho indireto — o que pode conflitar com a promessa implícita de LGPD do soft delete.
-3. **Trocar o filtro por consulta explícita** — remover o filtro global e escrever `.Where(s => !s.IsDeleted)` onde importa. Elimina toda a interação implícita ao custo de repetição e de risco de esquecimento.
-
-Enquanto não houver decisão, **não adicione `Include(p => p.Student)` nem predicados sobre a navegação** achando que é correção inócua: o efeito colateral é fazer linhas sumirem.
+Os testes unitários **não** cobrem isso, porque mockam `IPaymentRepository` devolvendo um `Payment` com `Student` preenchido à mão. Quem protege é `tests/TechCurse.Api.IntegrationTests/Endpoints/PaymentNavigationTests.cs`, que exercita os dois caminhos com aluno ativo e removido.
 
 ## Branches
 

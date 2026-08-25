@@ -19,6 +19,8 @@ public class PaymentRepository : IPaymentRepository
     {
         return await _context.Payments
             .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(p => p.Student)
             .FirstOrDefaultAsync(p => p.PaymentId == id);
     }
 
@@ -45,6 +47,9 @@ public class PaymentRepository : IPaymentRepository
         var query = _context.Payments
             .AsQueryable()
             .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(p => p.Enrollment)
+                .ThenInclude(e => e.Student)
             .Where(p => p.EnrollmentId == enrollmentId);
 
         var items = await query
