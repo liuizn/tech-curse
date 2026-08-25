@@ -70,23 +70,42 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     }
 });
 
-// Seção de Seed de Dados
+// Seção de Migrations e Seed de Dados
+//
+// LIMITAÇÃO CONHECIDA: aplicar migrations no startup do próprio host é frágil quando a
+// API roda com múltiplas réplicas — todas sobem juntas e disputam o mesmo banco, o que
+// pode resultar em deadlock ou em uma migration aplicada pela metade. O caminho
+// convencional é extrair esta etapa para um job de migração dedicado, executado uma
+// única vez antes do deploy das réplicas (e com a API subindo só depois que ele termina).
+// Mantido aqui pela simplicidade do projeto; não implementado de propósito.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
     var dbContext = services.GetRequiredService<TechCurseContext>();
 
-    try
+    // Providers não relacionais — o InMemory usado pelos testes de integração — não têm
+    // pipeline de migrations: o schema é derivado direto do modelo. Chamar Migrate() ali
+    // lançaria InvalidOperationException, então a etapa toda só faz sentido no relacional.
+    if (dbContext.Database.IsRelational())
     {
-        dbContext.Database.Migrate();
+        try
+        {
+            dbContext.Database.Migrate();
 
-        await DbInitializer.SeedDataAsync(services);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocorreu um erro ao rodar as Migrations ou o Seed do banco de dados.");
+            await DbInitializer.SeedDataAsync(services);
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Ocorreu um erro ao rodar as Migrations ou o Seed do banco de dados.");
+
+            // Engolir esta exceção deixaria a aplicação no ar com o banco em estado
+            // desconhecido — sem schema ou com schema desatualizado — servindo requisições
+            // que só falhariam muito depois, longe da causa. Relançar aborta o startup e
+            // faz o processo morrer com o erro à vista.
+            throw;
+        }
     }
 }
 
