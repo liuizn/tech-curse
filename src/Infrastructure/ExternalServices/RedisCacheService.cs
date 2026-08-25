@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
-using System.Text.Json;
 using TechCurse.Application.Interfaces;
 
 namespace TechCurse.Infrastructure.ExternalServices;

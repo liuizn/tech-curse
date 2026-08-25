@@ -1,4 +1,4 @@
-﻿namespace TechCurse.Domain.Exceptions;
+namespace TechCurse.Domain.Exceptions;
 
 public class ForbiddenAccessException : Exception
 {

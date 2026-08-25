@@ -15,7 +15,7 @@ public class DeleteStudentCommandHandler : IRequestHandler<DeleteStudentCommand>
     private const string STUDENT_LIST_PREFIX = "students:list:";
 
     public DeleteStudentCommandHandler(
-        IStudentRepository studentRepository, 
+        IStudentRepository studentRepository,
         ICacheService cacheService,
         UserManager<IdentityUser> userManager)
     {

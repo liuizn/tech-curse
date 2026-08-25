@@ -31,7 +31,7 @@ public class GetStudentsQueryHandler : IRequestHandler<GetStudentsQuery, PagedRe
         var (students, totalCount) = await _studentRepository.GetPagedAsync(searchParams);
 
         var dtos = students.Select(c => new StudentOutputDto(c.StudentId, c.Nome, c.Email, c.DataCadastro));
-        
+
         var result = new PagedResultDto<StudentOutputDto>(
             dtos,
             totalCount,

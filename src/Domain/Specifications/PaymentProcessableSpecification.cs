@@ -1,4 +1,4 @@
-﻿namespace TechCurse.Domain.Specifications;
+namespace TechCurse.Domain.Specifications;
 
 public interface ISpecification<T>
 {

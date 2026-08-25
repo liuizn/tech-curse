@@ -1,11 +1,35 @@
+# O Dockerfile copia apenas Directory.Build.props, Directory.Packages.props e a
+# arvore src/. Tudo o mais so engorda o contexto de build — que e enviado inteiro
+# ao daemon a cada build, antes de qualquer camada ser avaliada.
+
+# Controle de versao e IDE
 **/.git
 **/.gitignore
 **/.vs
 **/.vscode
+
+# Saidas de build e artefatos locais
 **/bin
 **/obj
 **/TestResults
 **/*.user
 **/*.old
 user_inputs.jsonl
-diagram.png
+
+# Worktrees de agente: copias completas do repositorio dentro do proprio
+# contexto. Sem esta linha, cada build reenvia o repo multiplicado.
+.claude/
+
+# Nada abaixo entra na imagem: o Dockerfile nao compila os testes nem le
+# documentacao. "docs/" substitui o antigo padrao "diagram.png", que casava
+# apenas na raiz e parou de valer quando o arquivo virou docs/diagram.png —
+# 1,4 MB voltaram silenciosamente para o contexto a cada build.
+tests/
+.github/
+docs/
+**/*.md
+
+# Segredos: o docker-compose le o .env do host, nao do contexto de build.
+# Mante-lo fora impede que credenciais reais vazem para dentro da imagem.
+.env
+.env.*

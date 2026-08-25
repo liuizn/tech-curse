@@ -1,16 +1,16 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TechCurse.Api.Middleware;
 using TechCurse.Application.DTOs;
-using TechCurse.Application.Features.Payments.Queries.GetPayments;
-using TechCurse.Application.Features.Payments.Queries.GetPaymentById;
-using TechCurse.Application.Features.Payments.Queries.GetPaymentsByStudentId;
-using TechCurse.Application.Features.Payments.Queries.GetPaymentsByEnrollmentId;
 using TechCurse.Application.Features.Payments.Commands.CreatePayment;
 using TechCurse.Application.Features.Payments.Commands.ProcessPayment;
 using TechCurse.Application.Features.Payments.Commands.RefundPayment;
-using MediatR;
+using TechCurse.Application.Features.Payments.Queries.GetPaymentById;
+using TechCurse.Application.Features.Payments.Queries.GetPayments;
+using TechCurse.Application.Features.Payments.Queries.GetPaymentsByEnrollmentId;
+using TechCurse.Application.Features.Payments.Queries.GetPaymentsByStudentId;
 
 namespace TechCurse.Api.Controllers;
 
@@ -48,7 +48,7 @@ public class PaymentController : ControllerBase
     [SwaggerOperation(
         Summary = "Busca os detalhes de um pagamento específico pelo ID.",
         Description = "**Acesso:** Requer role de Admin ou o Próprio Student"
-    )]  
+    )]
     [SwaggerResponse(StatusCodes.Status200OK, "Pagamento encontrado.", typeof(PaymentOutputDto))]
     [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuário não autenticado.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Pagamento não encontrado.", typeof(ProblemDetails))]

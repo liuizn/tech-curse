@@ -54,11 +54,24 @@ app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
-// O writer padrão responde apenas "Healthy"/"Unhealthy" em texto puro, sem dizer
-// qual verificação falhou. Detalhar por check é o que torna um 503 diagnosticável
-// no pipeline, onde só se enxerga a resposta HTTP.
-app.MapHealthChecks("/health", new HealthCheckOptions
+// Liveness: "o processo está de pé?". Predicate sempre falso significa que
+// nenhuma verificação roda — nem banco, nem cache. É deliberado: se o liveness
+// reprovasse por um SQL Server fora do ar, o orquestrador reiniciaria um
+// processo saudável, e o restart não conserta o banco. Resposta é o texto puro
+// do writer padrão, sem detalhe de infraestrutura.
+app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
+    Predicate = _ => false
+});
+
+// Readiness: "dá para receber tráfego?". Agrega apenas os checks marcados com a
+// tag "ready" (banco e cache). O writer padrão responde apenas
+// "Healthy"/"Unhealthy" em texto puro, sem dizer qual verificação falhou;
+// detalhar por check é o que torna um 503 diagnosticável no pipeline, onde só se
+// enxerga a resposta HTTP.
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains(HealthCheckTags.Ready),
     ResponseWriter = async (context, report) =>
     {
         context.Response.ContentType = "application/json; charset=utf-8";

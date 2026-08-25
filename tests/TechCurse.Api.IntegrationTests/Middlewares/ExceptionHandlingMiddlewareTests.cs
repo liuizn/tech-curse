@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using TechCurse.Application.Features.Courses.Commands.CreateCourse;
 using TechCurse.Api.IntegrationTests.Fixtures;
+using TechCurse.Application.Features.Courses.Commands.CreateCourse;
 using Xunit;
 
 namespace TechCurse.Api.IntegrationTests.Middlewares;

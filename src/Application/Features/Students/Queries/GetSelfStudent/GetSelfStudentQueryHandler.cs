@@ -11,7 +11,7 @@ public class GetSelfStudentQueryHandler : IRequestHandler<GetSelfStudentQuery, S
     private readonly ICurrentUserService _currentUserService;
 
     public GetSelfStudentQueryHandler(
-        IStudentRepository studentRepository, 
+        IStudentRepository studentRepository,
         ICurrentUserService currentUserService)
     {
         _studentRepository = studentRepository;

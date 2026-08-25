@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Tests-206%20Passing%20(100%25)-brightgreen?style=for-the-badge&logo=xunit" alt="Tests" />
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge" alt="License" />
 </p>
 
 ---
@@ -165,7 +165,8 @@ dotnet run --project src/Api
 
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)
-- **Health Check:** [http://localhost:5130/health](http://localhost:5130/health)
+- **Liveness:** [http://localhost:5130/health/live](http://localhost:5130/health/live) — responde 200 se o processo está de pé, sem consultar dependência alguma
+- **Readiness:** [http://localhost:5130/health/ready](http://localhost:5130/health/ready) — agrega SQL Server e Redis, com JSON detalhado por verificação
 
 ---
 
@@ -288,4 +289,4 @@ pie title Distribuição dos 206 Testes Automatizados
 
 ## 📄 Licença
 
-Este projeto está sob a licença [MIT](LICENSE). Consulte o arquivo de licença para obter mais informações.
+Este projeto está sob a licença [Apache 2.0](LICENSE). Consulte o arquivo de licença para obter mais informações.

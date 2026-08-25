@@ -1,4 +1,4 @@
-﻿using TechCurse.Application.DTOs;
+using TechCurse.Application.DTOs;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;

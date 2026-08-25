@@ -2,10 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
+using TechCurse.Api.IntegrationTests.Fixtures;
 using TechCurse.Application.DTOs;
 using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
-using TechCurse.Api.IntegrationTests.Fixtures;
 using Xunit;
 
 namespace TechCurse.Api.IntegrationTests.Endpoints;

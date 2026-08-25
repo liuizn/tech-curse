@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;

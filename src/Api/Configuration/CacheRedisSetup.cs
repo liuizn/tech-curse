@@ -1,4 +1,4 @@
-﻿using StackExchange.Redis;
+using StackExchange.Redis;
 
 namespace TechCurse.Api.Configuration;
 
@@ -19,7 +19,12 @@ public static class CacheRedisSetup
         services.AddSingleton<IConnectionMultiplexer>(sp =>
             ConnectionMultiplexer.Connect(cacheConnectionString));
 
-        services.AddHealthChecks().AddRedis(cacheConnectionString, name: "Cache_Redis");
+        // Tag "ready": mesma lógica do banco — cache indisponível degrada o
+        // atendimento, não invalida o processo. Só entra em /health/ready.
+        services.AddHealthChecks().AddRedis(
+            cacheConnectionString,
+            name: "Cache_Redis",
+            tags: [HealthCheckTags.Ready]);
 
         return services;
     }

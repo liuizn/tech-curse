@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace TechCurse.Infrastructure.Data;
@@ -6,7 +6,7 @@ namespace TechCurse.Infrastructure.Data;
 public static class DbInitializer
 {
     public static async Task SeedDataAsync(IServiceProvider serviceProvider)
-    {        
+    {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         // Roles

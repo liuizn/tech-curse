@@ -1,11 +1,11 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using TechCurse.Application.Interfaces;
-using TechCurse.Infrastructure.Repositories;
 using TechCurse.Infrastructure.ExternalServices;
 using TechCurse.Infrastructure.Identity;
+using TechCurse.Infrastructure.Repositories;
 
 namespace TechCurse.Infrastructure
 {

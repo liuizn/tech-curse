@@ -36,7 +36,7 @@ public class CreateCourseCommandHandler : IRequestHandler<CreateCourseCommand, C
 
         var cacheKey = $"{COURSE_ITEM_PREFIX}{course.CourseId}";
         await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));
-        
+
         await _cacheService.RemoveByPrefixAsync(COURSE_LIST_PREFIX);
 
         return result;

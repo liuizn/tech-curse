@@ -1,4 +1,4 @@
-﻿using TechCurse.Domain.Entities;
+using TechCurse.Domain.Entities;
 
 namespace TechCurse.Application.DTOs;
 

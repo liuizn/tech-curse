@@ -22,7 +22,7 @@ public class CorrelationIdMiddlewareTests : IClassFixture<CustomWebApplicationFa
         var client = _factory.CreateAnonymousClient();
 
         // Act
-        var response = await client.GetAsync("/health");
+        var response = await client.GetAsync("/health/live");
 
         // Assert
         response.Headers.Should().ContainKey("X-Correlation-ID");
@@ -40,7 +40,7 @@ public class CorrelationIdMiddlewareTests : IClassFixture<CustomWebApplicationFa
         client.DefaultRequestHeaders.Add("X-Correlation-ID", customCorrelationId);
 
         // Act
-        var response = await client.GetAsync("/health");
+        var response = await client.GetAsync("/health/live");
 
         // Assert
         response.Headers.Should().ContainKey("X-Correlation-ID");

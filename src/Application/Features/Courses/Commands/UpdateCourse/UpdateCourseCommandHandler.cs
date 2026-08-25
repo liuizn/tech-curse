@@ -37,7 +37,7 @@ public class UpdateCourseCommandHandler : IRequestHandler<UpdateCourseCommand, U
 
         var updatedDto = new CourseOutputDto(course.CourseId, course.Titulo, course.Descricao, course.Categoria, course.CargaHoraria, course.DataCriacao);
         await _cacheService.SetAsync($"{COURSE_ITEM_PREFIX}{request.Id}", updatedDto, TimeSpan.FromMinutes(15));
-        
+
         await _cacheService.RemoveByPrefixAsync(COURSE_LIST_PREFIX);
 
         return Unit.Value;

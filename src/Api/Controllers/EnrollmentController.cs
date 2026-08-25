@@ -1,9 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Features.Enrollments.Commands.CreateEnrollment;
-using MediatR;
 
 namespace TechCurse.Api.Controllers;
 

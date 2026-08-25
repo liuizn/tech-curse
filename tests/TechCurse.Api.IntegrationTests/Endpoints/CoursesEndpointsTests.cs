@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using TechCurse.Api.IntegrationTests.Fixtures;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Features.Courses.Commands.CreateCourse;
 using TechCurse.Domain.Entities;
-using TechCurse.Api.IntegrationTests.Fixtures;
 using Xunit;
 
 namespace TechCurse.Api.IntegrationTests.Endpoints;

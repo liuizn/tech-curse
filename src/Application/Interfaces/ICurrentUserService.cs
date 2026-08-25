@@ -1,4 +1,4 @@
-﻿using TechCurse.Domain.Enums;
+using TechCurse.Domain.Enums;
 
 namespace TechCurse.Application.Interfaces;
 

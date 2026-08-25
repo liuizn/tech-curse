@@ -8,7 +8,7 @@ public class CreateEnrollmentCommandValidator : AbstractValidator<CreateEnrollme
     {
         RuleFor(c => c.CourseId)
             .GreaterThan(0).WithMessage("O ID do curso deve ser maior que zero.");
-            
+
         RuleFor(c => c.StudentId)
             .GreaterThan(0).WithMessage("O ID do estudante deve ser maior que zero.");
     }

@@ -16,7 +16,7 @@ public class UpdateStudentCommandHandler : IRequestHandler<UpdateStudentCommand>
     private const string STUDENT_LIST_PREFIX = "students:list:";
 
     public UpdateStudentCommandHandler(
-        IStudentRepository studentRepository, 
+        IStudentRepository studentRepository,
         ICacheService cacheService,
         ICurrentUserService currentUserService)
     {

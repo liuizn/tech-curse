@@ -20,9 +20,9 @@ public class RefundPaymentCommandHandler : IRequestHandler<RefundPaymentCommand,
     private const string PAYMENT_BY_ENROLLMENT_PREFIX = "payments:enrollment:";
 
     public RefundPaymentCommandHandler(
-        IPaymentRepository paymentRepository, 
-        IPaymentGatewayAdapter paymentGateway, 
-        ICacheService cacheService, 
+        IPaymentRepository paymentRepository,
+        IPaymentGatewayAdapter paymentGateway,
+        ICacheService cacheService,
         ILogger<RefundPaymentCommandHandler> logger)
     {
         _paymentRepository = paymentRepository;
