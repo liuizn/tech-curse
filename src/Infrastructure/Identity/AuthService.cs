@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Identity;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Exceptions;
