@@ -43,6 +43,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Audience", JwtAudience);
         builder.UseSetting("Jwt:SigningKey", JwtSigningKey);
 
+        // A suíte inteira compartilha o mesmo host e o mesmo IP de origem (nulo, no
+        // TestServer), então todos os testes caem na mesma partição do rate limiter.
+        // Desligado por padrão para que o volume de requisições da suíte não vire
+        // 429 aleatório; RateLimitedAuthEndpointsTests religa com limites próprios.
+        builder.UseSetting("RateLimiting:Enabled", "false");
+
         builder.ConfigureTestServices(services =>
         {
             services.AddDbContext<TechCurseContext>(options =>

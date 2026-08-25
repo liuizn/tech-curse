@@ -88,6 +88,9 @@ Pontos que se repetem em todo o código:
 - **Autorização**: RBAC por `[Authorize(Roles = "Admin|Instructor|Student")]` no controller; regras de "é o próprio usuário" ficam nos handlers via `ICurrentUserService`. As roles são criadas no startup pelo `DbInitializer`.
 - **Pagamentos**: `PaymentStrategyFactory` resolve a `IPaymentStrategy` pelo `PaymentMethodType`; a elegibilidade é checada por `PaymentProcessableSpecification` antes de chamar o `IPaymentGatewayAdapter`.
 - **Soft delete**: `Student` tem global query filter (`!s.IsDeleted`) no `OnModelCreating`.
+- **Rate limiting**: `RateLimitingSetup` registra um limiter global (por usuário autenticado, ou por IP quando anônimo) e a política nomeada `RateLimitingSetup.PoliticaAutenticacao`, aplicada ao `AuthController` via `[EnableRateLimiting]`. O `UseRateLimiter()` fica entre `UseAuthentication()` e `UseAuthorization()`, e a rejeição devolve `ProblemDetails` 429 no mesmo formato do `ExceptionHandlingMiddleware`.
+- **Refresh token**: o `AuthService` persiste em `AspNetUserTokens` o **SHA-256** do refresh token (`JWTApp`/`RefreshToken`) e a expiração ISO-8601 (`JWTApp`/`RefreshTokenExpiry`). A comparação no `/refresh` é feita em tempo constante por `ITokenService.RefreshTokenMatches`. O valor em texto puro só existe na resposta HTTP.
+- **Data Protection**: o chaveiro é persistido no banco (`TechCurseContext : IDataProtectionKeyContext`, tabela `DataProtectionKeys`), com `SetApplicationName` fixo — nada de chaves efêmeras no filesystem do container.
 
 ### Configuração
 
@@ -95,6 +98,8 @@ Configuração vem de variáveis de ambiente / connection strings, não de `apps
 
 - `ConnectionStrings:APITechCurse`, `ConnectionStrings:RedisCache`, `ConnectionStrings:SeqUrl`
 - `Jwt:Issuer`, `Jwt:Audience`, `Jwt:SigningKey` (mínimo 32 caracteres — o startup lança exceção se for menor)
+- `Jwt:RefreshTokenDays` — validade do refresh token (padrão 7)
+- `RateLimiting:Enabled` (padrão `true`), `RateLimiting:GlobalPermitLimit` (200), `RateLimiting:GlobalWindowSeconds` (60), `RateLimiting:AuthPermitLimit` (10), `RateLimiting:AuthWindowSeconds` (60)
 - `UseInMemoryDatabase=true` faz o `EFCoreSetup` pular o registro do SQL Server; é o gancho usado pelos testes de integração.
 
 No Docker Compose essas chaves chegam como `Jwt__SigningKey`, `ConnectionStrings__APITechCurse`, etc., alimentadas pelo `.env`.

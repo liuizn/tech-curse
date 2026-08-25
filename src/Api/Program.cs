@@ -23,6 +23,8 @@ builder.Services.AddSerilogSetup(builder.Configuration);
 builder.Services.AddEFCoreSetup(builder.Configuration);
 builder.Services.AddIdentityAuthenticationSetup(builder.Configuration);
 builder.Services.AddRedisCacheSetup(builder.Configuration);
+builder.Services.AddDataProtectionSetup();
+builder.Services.AddRateLimitingSetup(builder.Configuration);
 
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
@@ -42,6 +44,13 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Homolog"))
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+
+// Entre autenticação e autorização de propósito: depois de UseAuthentication o
+// limiter já enxerga o usuário do token (e particiona por usuário em vez de por IP);
+// antes de UseAuthorization porque o JwtBearerEvents lança UnauthorizedException ali,
+// e um 401 emitido antes do limiter deixaria requisições anônimas sem contabilização.
+app.UseRateLimiter();
+
 app.UseAuthorization();
 
 app.MapControllers();
