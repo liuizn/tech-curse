@@ -114,8 +114,33 @@ Ao criar uma nova slice, o caminho completo é: `Command`/`Query` + `Handler` + 
 ## Armadilhas conhecidas
 
 - **Migrations vivem em `src/Infrastructure/Migrations/`** (namespace `TechCurse.Infrastructure.Migrations`), mesmo assembly do `TechCurseContext` — por isso não é preciso configurar `MigrationsAssembly()`. O EF localiza migrations pelos atributos `[DbContext]`/`[Migration]`, não por convenção de diretório. Nada fora de `src/` entra em compilação, e o `Dockerfile` copia apenas `src/`: arquivo de código colocado fora dessa árvore é silenciosamente ignorado pelo build.
-- **`Student` tem query filter global (`!IsDeleted`) e é a ponta obrigatória** dos relacionamentos com `Enrollment` e `Payment`, que não têm filtro equivalente. Queries com join podem se comportar de forma inesperada para alunos soft-deleted. O EF sinaliza isso com `PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning`, emitido na construção do modelo (runtime / comandos `dotnet ef`) — **não** na saída do compilador. Decidir se `Enrollment` e `Payment` também devem ganhar filtro continua em aberto.
+- **`Student` tem query filter global (`!IsDeleted`) e é a ponta obrigatória** dos relacionamentos com `Enrollment` e `Payment`, que não têm filtro equivalente. O EF sinaliza isso com `PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning`, emitido na construção do modelo (runtime / comandos `dotnet ef`) — **não** na saída do compilador. Ver a seção "Soft delete: decisão em aberto" abaixo antes de mexer em qualquer query de `Payment` ou `Enrollment`.
 - **Propriedades de entidade usam `= null!` / `= string.Empty`** em vez de `required`: navegações são preenchidas pelo EF, e `required` quebraria os object initializers espalhados pelos testes. O build roda com **zero warnings** — se um `dotnet build` seu passar a emitir CS86xx, é código novo, não ruído herdado.
+
+## Soft delete: decisão em aberto
+
+Comportamento **medido** (EF InMemory, contexto limpo), não suposto:
+
+| Consulta | Aluno ativo | Aluno soft-deleted |
+| --- | --- | --- |
+| `_context.Payments...` (sem join) | traz o pagamento | **traz o pagamento** |
+| `.Include(p => p.Student)` | traz o pagamento | **o pagamento some por inteiro** |
+| `.Where(p => p.Student.Nome == x)` | traz o pagamento | **o pagamento some por inteiro** |
+
+A navegação `Payment.Student` é obrigatória, então o EF traduz o `Include` em `INNER JOIN`; o filtro `!IsDeleted` no `Student` elimina a linha do lado de fora. O resultado é que hoje o sistema é **incoerente consigo mesmo**: `PaymentRepository.GetPagedAsync` e `GetByStudentIdAsync` (sem join) continuam listando pagamentos de alunos removidos, mas qualquer consulta que toque a navegação os apaga silenciosamente.
+
+**Duas armadilhas concretas já presentes no código** (`src/Infrastructure/Repositories/PaymentRepository.cs`):
+
+- `GetByIdAsync` usa `AsNoTracking()` **sem `Include`**, e `GetPaymentByIdQueryHandler` lê `payment.Student.IdentityUserId`. Sem lazy loading (o pacote `Microsoft.EntityFrameworkCore.Proxies` está referenciado, mas `UseLazyLoadingProxies()` nunca é chamado e as navegações não são `virtual`), `payment.Student` é **null** — `NullReferenceException`. Os testes unitários não pegam isso porque mockam `IPaymentRepository` devolvendo um `Payment` com `Student` preenchido à mão.
+- `GetByEnrollmentIdAsync` tem o mesmo problema com `Enrollment`, lido em `GetPaymentsByEnrollmentIdQueryHandler` via `.Enrollment.Student`.
+
+O `Include` que corrige essas duas é exatamente o que ativa a interação com o query filter — por isso as duas questões precisam ser resolvidas juntas, e a escolha é **de produto**:
+
+1. **Propagar o soft delete** — dar filtro `!Student.IsDeleted` a `Enrollment` e `Payment`. Coerente e previsível, mas some com o histórico financeiro do aluno removido: relatórios de faturamento e conciliação passam a não fechar retroativamente quando alguém é removido.
+2. **Restringir o filtro ao agregado `Student`** e usar `IgnoreQueryFilters()` nas consultas de `Payment`/`Enrollment` que precisam da navegação. Preserva o histórico, mas expõe dados de aluno removido por um caminho indireto — o que pode conflitar com a promessa implícita de LGPD do soft delete.
+3. **Trocar o filtro por consulta explícita** — remover o filtro global e escrever `.Where(s => !s.IsDeleted)` onde importa. Elimina toda a interação implícita ao custo de repetição e de risco de esquecimento.
+
+Enquanto não houver decisão, **não adicione `Include(p => p.Student)` nem predicados sobre a navegação** achando que é correção inócua: o efeito colateral é fazer linhas sumirem.
 
 ## Branches
 
