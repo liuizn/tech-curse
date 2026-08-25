@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean%20Architecture%20%7C%20CQRS-239120?style=for-the-badge&logo=c-sharp&logoColor=white" alt="Clean Architecture & CQRS" />
   <img src="https://img.shields.io/badge/MediatR-Pipeline%20Behaviors-34495E?style=for-the-badge" alt="MediatR" />
   <img src="https://img.shields.io/badge/Validation-FluentValidation-009688?style=for-the-badge" alt="FluentValidation" />
-  <img src="https://img.shields.io/badge/Tests-206%20Passing%20(100%25)-brightgreen?style=for-the-badge&logo=xunit" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-229%20Passing%20(100%25)-brightgreen?style=for-the-badge&logo=xunit" alt="Tests" />
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge" alt="License" />
@@ -22,7 +22,7 @@ A plataforma provê a gestão completa do ciclo de vida de uma edtech:
 - 👨‍🎓 **Gestão de Estudantes:** Ciclo de vida de alunos, perfis e consultas de autoatendimento (`/me`).
 - 📝 **Matrículas Inteligentes:** Validação de duplicidade e controle de status de matrícula.
 - 💳 **Processamento de Pagamentos:** Pipeline transacional com estratégias de pagamento, idempotência com Redis e estornos seguros.
-- 🛡️ **Segurança & Observabilidade:** Autenticação stateless via JWT Bearer, controle de acesso baseado em Roles (`Admin`, `Instructor`, `Student`), logs estruturados com Serilog/Seq e rastreabilidade com Correlation ID.
+- 🛡️ **Segurança & Observabilidade:** Autenticação stateless via JWT Bearer com refresh token protegido por hash, rate limiting HTTP, controle de acesso baseado em Roles (`Admin`, `Instructor`, `Student`), logs estruturados com Serilog/Seq e rastreabilidade com Correlation ID.
 
 ---
 
@@ -96,16 +96,16 @@ flowchart TD
 | **Runtime & Framework** | [.NET 10](https://dotnet.microsoft.com/) / C# 14 | `10.0` | Runtime de alto desempenho e recursos modernos da linguagem |
 | **API Framework** | [ASP.NET Core Web API](https://learn.microsoft.com/aspnet/core/) | `10.0` | Framework web robusto para serviços HTTP RESTful |
 | **Padrão Arquitetural** | [MediatR](https://github.com/jbogard/MediatR) | `12.4.1` | Implementação de CQRS, desacoplamento e Pipeline Behaviors |
-| **Validação de Dados** | [FluentValidation](https://fluentvalidation.net/) | `11.10.0` | Validação determinística de contratos no pipeline da aplicação |
-| **Mapeamento & ORM** | [Entity Framework Core 10](https://learn.microsoft.com/ef/core/) | `10.0.0` | ORM relacional com Migrations, Proxies e Tracking otimizado |
+| **Validação de Dados** | [FluentValidation](https://fluentvalidation.net/) | `12.1.1` | Validação determinística de contratos no pipeline da aplicação |
+| **Mapeamento & ORM** | [Entity Framework Core 10](https://learn.microsoft.com/ef/core/) | `10.0.11` | ORM relacional com Migrations, Proxies e Tracking otimizado |
 | **Banco de Dados Relacional** | [Microsoft SQL Server](https://www.microsoft.com/sql-server/) | `2022` | Persistência transacional com integridade referencial |
-| **Cache Distribuído** | [Redis](https://redis.io/) / [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/) | `3.0.17` | Cache em memória para chaves de idempotência e performance |
-| **Autenticação & Segurança** | [ASP.NET Core Identity](https://learn.microsoft.com/aspnet/core/security/authentication/identity) & JWT Bearer | `10.0.0` | Gestão de identidade, controle de credenciais e autorização RBAC |
-| **Observabilidade & Logs** | [Serilog](https://serilog.net/) & [Seq](https://datalust.co/seq) | `8.0.3` | Logging estruturado, Correlation ID e telemetria centralizada |
-| **Documentação Interativa** | [Swagger / Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore) | `6.6.2` | OpenAPI Specification 3.0 com anotações e suporte a JWT |
+| **Cache Distribuído** | [Redis](https://redis.io/) / [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/) | `3.1.31` | Cache em memória para chaves de idempotência e performance |
+| **Autenticação & Segurança** | [ASP.NET Core Identity](https://learn.microsoft.com/aspnet/core/security/authentication/identity) & JWT Bearer | `10.0.11` | Gestão de identidade, controle de credenciais e autorização RBAC |
+| **Observabilidade & Logs** | [Serilog](https://serilog.net/) & [Seq](https://datalust.co/seq) | `10.0.0` | Logging estruturado, Correlation ID e telemetria centralizada |
+| **Documentação Interativa** | [Swagger / Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore) | `10.2.3` | OpenAPI Specification 3.0 com anotações e suporte a JWT |
 | **Testes de Arquitetura** | [NetArchTest.Rules](https://github.com/BenMorris/NetArchTest) | `1.3.2` | Governança de isolamento de camadas e convenções de código |
 | **Testes Automatizados** | [xUnit](https://xunit.net/), [Moq](https://github.com/devlooped/moq), [FluentAssertions](https://fluentassertions.com/) | `Latest` | Framework de testes unitários, asserções fluentes e mocking |
-| **Testes de Integração** | [Microsoft.AspNetCore.Mvc.Testing](https://learn.microsoft.com/aspnet/core/test/integration-tests) | `10.0.0` | Testes ponta a ponta em memória com `WebApplicationFactory` |
+| **Testes de Integração** | [Microsoft.AspNetCore.Mvc.Testing](https://learn.microsoft.com/aspnet/core/test/integration-tests) | `10.0.11` | Testes ponta a ponta em memória com `WebApplicationFactory` |
 
 ---
 
@@ -166,7 +166,7 @@ dotnet run --project src/Api
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)
 - **Liveness:** [http://localhost:5130/health/live](http://localhost:5130/health/live) — responde 200 se o processo está de pé, sem consultar dependência alguma
-- **Readiness:** [http://localhost:5130/health/ready](http://localhost:5130/health/ready) — agrega SQL Server e Redis, com JSON detalhado por verificação
+- **Readiness:** [http://localhost:5130/health/ready](http://localhost:5130/health/ready) — agrega SQL Server e Redis. Devolve apenas o status agregado para quem não é `Admin`; o detalhe por verificação exige JWT de `Admin`
 
 ---
 
@@ -243,14 +243,14 @@ sequenceDiagram
 
 ## 🧪 Suíte de Testes Automatizados
 
-A solução adota a cultura de qualidade estrita, contando com **206 testes automatizados (100% passing)** estruturados em 4 projetos de testes especializados:
+A solução adota a cultura de qualidade estrita, contando com **229 testes automatizados (100% passing)** estruturados em 4 projetos de testes especializados:
 
 ```
 📦 tests
  ┣ 📂 TechCurse.ArchitectureTests       (23 testes)  -> NetArchTest.Rules
  ┣ 📂 TechCurse.Domain.UnitTests        (6 testes)   -> Entidades, Specifications
  ┣ 📂 TechCurse.Application.UnitTests   (133 testes) -> Handlers, Validators
- ┗ 📂 TechCurse.Api.IntegrationTests    (44 testes)  -> WebApplicationFactory, Endpoints, Persistência
+ ┗ 📂 TechCurse.Api.IntegrationTests    (67 testes)  -> WebApplicationFactory, Endpoints, Persistência
 ```
 
 ### Como Executar os Testes
@@ -263,9 +263,9 @@ dotnet test --logger "console;verbosity=normal"
 ### Detalhamento dos Projetos de Teste
 
 ```mermaid
-pie title Distribuição dos 206 Testes Automatizados
+pie title Distribuição dos 229 Testes Automatizados
     "Application Unit Tests (Handlers / Validators)" : 133
-    "Integration Tests (E2E / Middlewares / Persistência)" : 44
+    "Integration Tests (E2E / Middlewares / Persistência)" : 67
     "Architecture Tests (NetArchTest Rules)" : 23
     "Domain Unit Tests (Entidades / Specifications)" : 6
 ```
@@ -280,10 +280,57 @@ pie title Distribuição dos 206 Testes Automatizados
 3. **Testes Unitários de Aplicação (`TechCurse.Application.UnitTests` - 133 testes):**
    - Cobre 100% dos Handlers de Commands e Queries do MediatR com isolamento via `Moq`.
    - Valida todas as regras de validação do FluentValidation (entradas válidas, nulas, limites e formatos).
-4. **Testes de Integração (`TechCurse.Api.IntegrationTests` - 44 testes):**
+4. **Testes de Integração (`TechCurse.Api.IntegrationTests` - 67 testes):**
    - Executa fluxos ponta a ponta simulando requisições HTTP reais com `WebApplicationFactory`.
    - Valida pipeline de autenticação JWT, autorização RBAC, middlewares de exceção e idempotência.
    - Cobre persistência direta no `TechCurseContext` em `Persistence/` e a geração do documento OpenAPI.
+
+---
+
+## 🛡️ Endurecimento de Segurança
+
+| Mecanismo | Implementação |
+| :--- | :--- |
+| **Refresh token** | Persistido como **SHA-256** em `AspNetUserTokens`, nunca em texto puro. Comparação em tempo constante via `CryptographicOperations.FixedTimeEquals` e expiração própria (`Jwt:RefreshTokenDays`, padrão 7 dias) |
+| **Rate limiting** | Limiter global de 200 req/min (particionado por usuário autenticado, ou por IP quando anônimo) e política dedicada de 10 req/min por IP nos endpoints de autenticação. Rejeição devolve `ProblemDetails` 429 com `Retry-After` |
+| **Data Protection** | Chaveiro persistido no banco (tabela `DataProtectionKeys`) com `SetApplicationName` fixo — sem chaves efêmeras que somem a cada recriação de contêiner |
+| **Lockout de conta** | 5 tentativas falhas bloqueiam por 15 minutos (ASP.NET Core Identity) |
+| **Health checks** | `/health/live` público e sem detalhe; `/health/ready` expõe status agregado a qualquer chamador, e o detalhe por verificação — que carrega endereços de servidor — apenas para `Admin` |
+| **Idempotência** | Header `Idempotency-Key` obrigatório nas escritas de pagamento, com resposta replicada do Redis por 6 minutos |
+
+Os limites de rate limiting são configuráveis por `RateLimiting:GlobalPermitLimit`, `RateLimiting:AuthPermitLimit` e equivalentes de janela.
+
+> ⚠️ O rate limiting é **em memória, por instância**: com N réplicas o limite efetivo é N×. Um limite verdadeiramente distribuído exigiria apoiá-lo no Redis já presente na stack.
+
+---
+
+## ⚙️ Pipeline de CI/CD
+
+Definido em [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml), em dois jobs encadeados:
+
+**1. Build, Tests and Publish** — restore com cache de NuGet, build, suíte completa com resultados `.trx` e cobertura publicados como artefato, auditoria de pacotes vulneráveis e publicação do artefato da aplicação.
+
+**2. Docker Build, Smoke Test and Push** — constrói a imagem **sem publicar**, sobe a stack completa via `docker-compose.ci.yml`, sonda `/health/ready` com retry, e só então autentica no registry e publica.
+
+```
+build da imagem (load, sem push)
+  └─ sobe SQL Server + Redis + Seq + API
+       └─ sonda /health/ready com retry (até 150s)
+            ├─ falhou → despeja logs dos contêineres e encerra SEM publicar
+            └─ passou → login no GHCR → docker tag + push
+```
+
+A ordem importa: **a imagem só chega ao registry depois de provar que sobe**. E o `docker tag` + `push` no final — em vez de reconstruir com `push: true` — garante que os bits publicados são exatamente os que passaram no smoke test.
+
+### Imagem publicada
+
+```bash
+docker pull ghcr.io/liuizn/tech-curse:latest
+```
+
+Cada execução publica duas tags: `latest` e `sha-<commit>`. A tag com o SHA é o que viabiliza rollback e rastreabilidade — `latest` é sobrescrita, o SHA não.
+
+A imagem usa a variante **chiseled** do runtime .NET (sem shell, sem gerenciador de pacotes, executando como usuário não-root), com as imagens base pinadas por digest para builds reproduzíveis.
 
 ---
 
