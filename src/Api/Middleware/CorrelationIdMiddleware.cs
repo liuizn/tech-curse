@@ -5,7 +5,7 @@ namespace TechCurse.Api.Middleware;
 public class CorrelationIdMiddleware
 {
     private readonly RequestDelegate _next;
-    private const string CorrelationIdHeaderName = "X-Correlation-ID";
+    public const string CorrelationIdHeaderName = "X-Correlation-ID";
 
     public CorrelationIdMiddleware(RequestDelegate next)
     {

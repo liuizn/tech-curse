@@ -24,6 +24,7 @@ builder.Services.AddIdentityAuthenticationSetup(builder.Configuration);
 builder.Services.AddRedisCacheSetup(builder.Configuration);
 builder.Services.AddDataProtectionSetup();
 builder.Services.AddRateLimitingSetup(builder.Configuration);
+builder.Services.AddCorsSetup(builder.Configuration);
 
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
@@ -33,6 +34,8 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<CorrelationIdMiddleware>();
+
+app.UseCors(CorsSetup.PoliticaFrontend);
 
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Homolog"))
 {
