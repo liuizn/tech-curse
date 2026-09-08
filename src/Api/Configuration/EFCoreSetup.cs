@@ -12,9 +12,12 @@ public static class EFCoreSetup
             return services;
         }
 
-        var apiConnectionString =
-            configuration.GetConnectionString("APITechCurse")
-            ?? throw new InvalidOperationException("Connection string 'APITechCurse' not found.");
+        var apiConnectionString = configuration.GetConnectionString("APITechCurse");
+
+        if (string.IsNullOrWhiteSpace(apiConnectionString))
+        {
+            throw new InvalidOperationException("A connection string 'APITechCurse' não está configurada.");
+        }
 
         services.AddDbContext<TechCurseContext>(options =>
         {

@@ -6,9 +6,12 @@ public static class CacheRedisSetup
 {
     public static IServiceCollection AddRedisCacheSetup(this IServiceCollection services, IConfiguration configuration)
     {
-        var cacheConnectionString =
-            configuration.GetConnectionString("RedisCache")
-            ?? throw new InvalidOperationException("Connection string 'RedisCache' not found.");
+        var cacheConnectionString = configuration.GetConnectionString("RedisCache");
+
+        if (string.IsNullOrWhiteSpace(cacheConnectionString))
+        {
+            throw new InvalidOperationException("A connection string 'RedisCache' não está configurada.");
+        }
 
         services.AddStackExchangeRedisCache(options =>
         {

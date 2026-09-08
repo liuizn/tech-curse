@@ -151,18 +151,23 @@ Os serviços estarão disponíveis em:
 Caso prefira rodar a API diretamente no host:
 
 ```bash
-# 1. Subir apenas os contêineres de dependência (SQL Server, Redis, Seq)
+# 1. Criar o arquivo de variáveis de ambiente (lido pelo Docker Compose)
+cp .env.example .env
+
+# 2. Subir apenas os contêineres de dependência (SQL Server, Redis, Seq)
 docker-compose up -d db redis seq
 
-# 2. Restaurar dependências da solução
+# 3. Restaurar dependências da solução
 dotnet restore
 
-# 3. Aplicar as Migrations do Entity Framework Core
+# 4. Aplicar as Migrations do Entity Framework Core
 dotnet ef database update --project src/Infrastructure --startup-project src/Api
 
-# 4. Executar a API em modo de Desenvolvimento
+# 5. Executar a API em modo de Desenvolvimento
 dotnet run --project src/Api
 ```
+
+Não há passo de configuração manual: as connection strings e as chaves de JWT deste caminho vêm de [`src/Api/appsettings.Development.json`](src/Api/appsettings.Development.json), versionado no repositório, apontando para os contêineres do passo 2 (`localhost,1433`, `localhost:6380`, `localhost:5341`). As credenciais ali são de **desenvolvimento local e descartável**, e batem com as do `.env.example` de propósito. Credencial real nunca fica no repositório — chega por variável de ambiente, e sobrescreve o arquivo quando presente.
 
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)

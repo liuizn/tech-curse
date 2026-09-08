@@ -9,9 +9,12 @@ public static class SerilogSetup
     {
         services.AddSerilog((serviceProvider, loggerConfiguration) =>
         {
-            var seqConnectionString =
-                configuration.GetConnectionString("SeqUrl")
-                ?? throw new InvalidOperationException("Connection string 'SeqUrl' not found.");
+            var seqConnectionString = configuration.GetConnectionString("SeqUrl");
+
+            if (string.IsNullOrWhiteSpace(seqConnectionString))
+            {
+                throw new InvalidOperationException("A connection string 'SeqUrl' não está configurada.");
+            }
 
             loggerConfiguration
                 .ReadFrom.Configuration(configuration)
