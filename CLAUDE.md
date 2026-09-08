@@ -87,7 +87,7 @@ Essas regras não são só convenção: o projeto `TechCurse.ArchitectureTests` 
 
 ### Fluxo de uma requisição
 
-Controller (só `IMediator`) → `ExceptionHandlingMiddleware` → `CorrelationIdMiddleware` → MediatR → `ValidationBehavior<,>` → Handler → Repositório/Cache/Gateway.
+Controller (só `IMediator`) → `ExceptionHandlingMiddleware` → `CorrelationIdMiddleware` → `UseCors` → MediatR → `ValidationBehavior<,>` → Handler → Repositório/Cache/Gateway.
 
 Pontos que se repetem em todo o código:
 
@@ -98,6 +98,7 @@ Pontos que se repetem em todo o código:
 - **Autorização**: RBAC por `[Authorize(Roles = "Admin|Instructor|Student")]` no controller; regras de "é o próprio usuário" ficam nos handlers via `ICurrentUserService`. As roles são criadas no startup pelo `DbInitializer`.
 - **Pagamentos**: `PaymentStrategyFactory` resolve a `IPaymentStrategy` pelo `PaymentMethodType`; a elegibilidade é checada por `PaymentProcessableSpecification` antes de chamar o `IPaymentGatewayAdapter`.
 - **Soft delete**: `Student` tem global query filter (`!s.IsDeleted`) no `OnModelCreating`. Consultas de `Payment` que usam navegação chamam `IgnoreQueryFilters()` — ver a seção "Soft delete: decisão tomada".
+- **CORS**: `CorsSetup` registra a política nomeada `CorsSetup.PoliticaFrontend`, com as origens vindas de `Cors:AllowedOrigins` (lista separada por vírgula, barra final normalizada). Lista vazia registra a política **sem nenhuma origem** — nunca cai em `AllowAnyOrigin`. `AllowCredentials` fica desligado de propósito: o token viaja em `Authorization`, não em cookie. **A posição de `UseCors()` no pipeline é deliberada** — depois do `CorrelationIdMiddleware` e **antes** de `UseHttpsRedirection()` e `UseRateLimiter()`: um preflight que passe pelo redirect HTTPS recebe 307 (e browser não segue redirect em preflight), e um preflight rejeitado pelo rate limiter sairia sem cabeçalho de CORS, aparecendo no console como erro de CORS em vez de 429. `WithExposedHeaders` publica `X-Correlation-ID` e `Retry-After`; sem isso o JS não lê nenhum dos dois, porque nenhum é CORS-safelisted. Lembre que `Access-Control-Expose-Headers` só aparece na **resposta real**, nunca no preflight.
 - **Rate limiting**: `RateLimitingSetup` registra um limiter global (por usuário autenticado, ou por IP quando anônimo) e a política nomeada `RateLimitingSetup.PoliticaAutenticacao`, aplicada ao `AuthController` via `[EnableRateLimiting]`. O `UseRateLimiter()` fica entre `UseAuthentication()` e `UseAuthorization()`, e a rejeição devolve `ProblemDetails` 429 no mesmo formato do `ExceptionHandlingMiddleware`. É **in-memory por instância**: com N réplicas o limite efetivo é N×.
 - **Refresh token**: o `AuthService` persiste em `AspNetUserTokens` o **SHA-256** do refresh token (`JWTApp`/`RefreshToken`) e a expiração ISO-8601 (`JWTApp`/`RefreshTokenExpiry`). A comparação no `/refresh` é feita em tempo constante por `ITokenService.RefreshTokenMatches`. O valor em texto puro só existe na resposta HTTP. É **um token por usuário**: login numa segunda máquina invalida a sessão da primeira.
 - **Data Protection**: o chaveiro é persistido no banco (`TechCurseContext : IDataProtectionKeyContext`, tabela `DataProtectionKeys`), com `SetApplicationName` fixo — nada de chaves efêmeras no filesystem do container.
@@ -111,6 +112,7 @@ Configuração vem de variáveis de ambiente / connection strings, não de `apps
 - `Jwt:Issuer`, `Jwt:Audience`, `Jwt:SigningKey` (mínimo 32 caracteres — o startup lança exceção se for menor). Gere com `openssl rand -base64 48`
 - `Jwt:RefreshTokenDays` — validade do refresh token (padrão 7)
 - `RateLimiting:Enabled` (padrão `true`), `RateLimiting:GlobalPermitLimit` (200), `RateLimiting:GlobalWindowSeconds` (60), `RateLimiting:AuthPermitLimit` (10), `RateLimiting:AuthWindowSeconds` (60)
+- `Cors:AllowedOrigins` — origens permitidas para o front-end, separadas por vírgula (ex.: `http://localhost:4200`). Vazio ou ausente desliga o CORS na prática. No compose chega como `Cors__AllowedOrigins`, alimentada por `CORS_ALLOWED_ORIGINS` no `.env`
 - `UseInMemoryDatabase=true` faz o `EFCoreSetup` pular o registro do SQL Server; é o gancho usado pelos testes de integração
 - `ASPNETCORE_ENVIRONMENT` — o `docker-compose.yml` assume `Development` quando ausente. **Não use `Production`** sem antes implementar um gateway de pagamento real; ver "Comportamento de startup"
 - `API_IMAGE` — nome da imagem usada pelo compose (padrão `tech-curse-api:local`). O pipeline define esta variável para validar exatamente a imagem que acabou de construir

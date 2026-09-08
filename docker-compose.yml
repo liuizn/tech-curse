@@ -55,6 +55,7 @@ services:
       - Jwt__SigningKey=${JWT_SIGNING_KEY}
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}
+      - Cors__AllowedOrigins=${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
       - ConnectionStrings__APITechCurse=Server=db;Database=APITechCurse;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
       - ConnectionStrings__RedisCache=redis:6379,password=${REDIS_PASSWORD},abortConnect=false,connectTimeout=5000
       - ConnectionStrings__SeqUrl=http://seq:5341
