@@ -27,7 +27,7 @@ public class AuthController : ControllerBase
         Summary = "Registra um novo usuário no sistema.",
         Description = "**Acesso:** Público."
     )]
-    [SwaggerResponse(StatusCodes.Status201Created, "Usuário registrado com sucesso.")]
+    [SwaggerResponse(StatusCodes.Status201Created, "Usuário registrado com sucesso.", typeof(MensagemOutputDto))]
     [SwaggerResponse(StatusCodes.Status409Conflict, "Conflito. O e-mail informado já está em uso.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "Erro de validação nos campos enviados.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de requisições de autenticação excedido.", typeof(ProblemDetails))]
@@ -35,7 +35,7 @@ public class AuthController : ControllerBase
     {
         var actionResult = await _authService.RegisterAsync(input);
 
-        return StatusCode(201, "Usuário registrado com sucesso.");
+        return StatusCode(201, new MensagemOutputDto("Usuário registrado com sucesso."));
     }
 
     [HttpPost("login")]
@@ -59,7 +59,7 @@ public class AuthController : ControllerBase
         Summary = "Gera um novo Token JWT a partir de um Refresh Token válido.",
         Description = "**Acesso:** Público."
     )]
-    [SwaggerResponse(StatusCodes.Status200OK, "Token atualizado com sucesso.", typeof(TokenOutputDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, "Token atualizado com sucesso.", typeof(AuthOutputDto))]
     [SwaggerResponse(StatusCodes.Status401Unauthorized, "Refresh token expirado ou inválido.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de requisições de autenticação excedido.", typeof(ProblemDetails))]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenInputDto input)
