@@ -902,7 +902,7 @@
                 "ready"
               ]
             },
-            "description": "Agrega SQL Server e Redis. Anonimo recebe apenas {\"status\":\"...\"}; com JWT de Admin, o JSON traz o detalhe de cada verificacao."
+            "description": "Agrega PostgreSQL e Redis. Anonimo recebe apenas {\"status\":\"...\"}; com JWT de Admin, o JSON traz o detalhe de cada verificacao."
           },
           "response": []
         }
