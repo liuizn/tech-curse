@@ -10,7 +10,7 @@ public class MigrationDriftTests
     private static TechCurseContext CriarContextoRelacional()
     {
         var options = new DbContextOptionsBuilder<TechCurseContext>()
-            .UseSqlServer("Server=127.0.0.1,1;Database=APITechCurse;User Id=sa;Password=SenhaIrrelevante1!;TrustServerCertificate=True")
+            .UseNpgsql("Host=127.0.0.1;Port=1;Database=APITechCurse;Username=postgres;Password=SenhaIrrelevante1!")
             .Options;
 
         return new TechCurseContext(options);

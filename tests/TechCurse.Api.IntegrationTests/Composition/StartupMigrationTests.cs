@@ -16,7 +16,7 @@ public class StartupMigrationTests
             builder.UseSetting("UseInMemoryDatabase", "false");
             builder.UseSetting(
                 "ConnectionStrings:APITechCurse",
-                "Server=127.0.0.1,1;Database=APITechCurse;User Id=sa;Password=SenhaIrrelevante1!;TrustServerCertificate=True;Connect Timeout=1");
+                "Host=127.0.0.1;Port=1;Database=APITechCurse;Username=postgres;Password=SenhaIrrelevante1!;Timeout=1");
             builder.UseSetting("ConnectionStrings:RedisCache", "localhost:6379,abortConnect=false");
             builder.UseSetting("ConnectionStrings:SeqUrl", "http://localhost:5341");
             builder.UseSetting("Jwt:Issuer", CustomWebApplicationFactory.JwtIssuer);

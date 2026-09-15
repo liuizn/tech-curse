@@ -32,7 +32,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.HasIndex(p => p.EnrollmentId)
                .IsUnique()
-               .HasFilter("[IsActive] = 1");
+               .HasFilter("\"IsActive\" = true");
 
         builder.HasOne(p => p.Enrollment)
                .WithMany()

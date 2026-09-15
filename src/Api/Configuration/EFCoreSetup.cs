@@ -21,20 +21,20 @@ public static class EFCoreSetup
 
         services.AddDbContext<TechCurseContext>(options =>
         {
-            options.UseSqlServer(
+            options.UseNpgsql(
                 apiConnectionString,
-                sqlOptions =>
+                npgsqlOptions =>
                 {
-                    sqlOptions.EnableRetryOnFailure(
+                    npgsqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 5,
                     maxRetryDelay: TimeSpan.FromSeconds(10),
-                    errorNumbersToAdd: null);
+                    errorCodesToAdd: null);
                 });
         });
 
-        services.AddHealthChecks().AddSqlServer(
+        services.AddHealthChecks().AddNpgSql(
             apiConnectionString,
-            name: "Database_SQLServer",
+            name: "Database_Postgres",
             tags: [HealthCheckTags.Ready]);
 
         return services;
