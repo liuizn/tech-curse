@@ -28,7 +28,7 @@ public class HealthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         var payload = await response.Content.ReadAsStringAsync();
         payload.Should().Be("Healthy");
         payload.Should().NotContain("Cache_Redis");
-        payload.Should().NotContain("Database_SQLServer");
+        payload.Should().NotContain("Database_Postgres");
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class HealthEndpointTests : IClassFixture<CustomWebApplicationFactory>
         root.TryGetProperty("checks", out _).Should().BeFalse();
         root.TryGetProperty("duracaoMs", out _).Should().BeFalse();
         payload.Should().NotContain("Cache_Redis");
-        payload.Should().NotContain("Database_SQLServer");
+        payload.Should().NotContain("Database_Postgres");
         payload.Should().NotContain("erro");
     }
 
