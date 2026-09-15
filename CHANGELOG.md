@@ -7,6 +7,29 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [Não lançado]
+
+### ⚠️ Breaking Changes
+
+| Quebra | O que fazer |
+| :--- | :--- |
+| **Banco relacional passou de SQL Server 2022 para PostgreSQL 17** | A connection string `ConnectionStrings:APITechCurse` muda de formato: `Host=...;Port=5432;Database=APITechCurse;Username=...;Password=...;`. Não há migração de dados: as migrations foram regeradas do zero, e um banco SQL Server existente não é reaproveitável |
+| Health check `Database_SQLServer` renomeado para `Database_Postgres` | Ajuste dashboards ou alertas que filtram pelo nome no detalhe de `/health/ready` |
+| Porta do banco no compose passou de `1433` para `5433` no host | Clientes locais apontam para `localhost:5433`; o volume `sqlserver_data` foi substituído por `postgres_data` — rode `docker compose down -v` para descartar o antigo |
+
+### 🔄 Alterado
+
+- `Microsoft.EntityFrameworkCore.SqlServer` → `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3; `AspNetCore.HealthChecks.SqlServer` → `AspNetCore.HealthChecks.NpgSql`.
+- O filtro do índice único de `Payment.EnrollmentId` passou de `[IsActive] = 1` para `"IsActive" = true`; o comportamento (um pagamento ativo por matrícula, reativação após desativar) foi verificado contra Postgres real.
+- O healthcheck do serviço `db` usa `pg_isready -h localhost`, forçando TCP para não reportar pronto durante o `initdb`.
+- Documentação (README, collection do Postman e CLAUDE.md) atualizada; o CLAUDE.md registra as armadilhas novas: `DateTime` precisa ser UTC, `HasFilter` é SQL cru no dialeto do provider, e troca de provider exige regerar migrations.
+
+### 📌 Mantido de propósito
+
+- A imagem `chiseled-extra` e `InvariantGlobalization=false` continuam, embora o motivo original (`Microsoft.Data.SqlClient`) tenha saído. Validar se o Npgsql dispensa o ICU é trabalho separado.
+
+---
+
 ## [2.0.0] - 2026-08-25
 
 ### 🌟 Resumo Executivo

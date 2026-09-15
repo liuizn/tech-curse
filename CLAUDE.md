@@ -15,7 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Visão geral
 
-API REST em .NET 10 / C# 14 para uma plataforma de cursos (cursos, estudantes, matrículas e pagamentos), estruturada em Clean Architecture + CQRS com Vertical Slices (MediatR), SQL Server (EF Core 10), Redis, Serilog/Seq e autenticação JWT com ASP.NET Core Identity.
+API REST em .NET 10 / C# 14 para uma plataforma de cursos (cursos, estudantes, matrículas e pagamentos), estruturada em Clean Architecture + CQRS com Vertical Slices (MediatR), PostgreSQL 17 (EF Core 10 via Npgsql), Redis, Serilog/Seq e autenticação JWT com ASP.NET Core Identity.
+
+O banco foi SQL Server até setembro de 2026. A troca foi de schema, não de dados — não havia produção — e as migrations foram regeradas do zero contra o Npgsql; não existe caminho de upgrade a partir de um banco SQL Server. Ver "Armadilhas conhecidas" para o que a troca ensinou.
 
 Material de apoio (diagrama de arquitetura, collection do Postman) fica em `docs/`.
 
@@ -41,7 +43,7 @@ dotnet test tests/TechCurse.Application.UnitTests/TechCurse.Application.UnitTest
 dotnet test TechCurse.slnx --filter "Category=Unit"
 ```
 
-Subir a stack completa (API + SQL Server + Redis + Seq). Requer `.env` — copie de `.env.example`:
+Subir a stack completa (API + PostgreSQL + Redis + Seq). Requer `.env` — copie de `.env.example`:
 
 ```bash
 docker-compose up -d --build
@@ -56,6 +58,14 @@ docker-compose up -d db redis seq
 ```bash
 dotnet run --project src/Api
 ```
+
+O compose publica o Postgres na porta **5433** do host (e o Redis na 6380) de propósito, para coexistir com instâncias pessoais nas portas padrão; o `appsettings.Development.json` aponta para essas portas. Para usar um Postgres próprio na 5432, não edite o arquivo versionado — o repositório é público. Grave em User Secrets, que o host carrega em `Development` por cima do `appsettings.Development.json` (o `UserSecretsId` já existe no `TechCurse.Api.csproj`):
+
+```bash
+dotnet user-secrets set "ConnectionStrings:APITechCurse" "Host=localhost;Port=5432;Database=APITechCurse;Username=<usuario>;Password=<senha>;" --project src/Api
+```
+
+O `dotnet ef` monta o host da API e lê os mesmos secrets, então `database update` sem `--connection` vai para onde o `dotnet run` iria.
 
 Criar migration do EF Core (o DbContext vive em Infrastructure, o host em API):
 
@@ -108,12 +118,12 @@ Pontos que se repetem em todo o código:
 
 Configuração vem de variáveis de ambiente / connection strings, não de `appsettings.json` (que só tem logging):
 
-- `ConnectionStrings:APITechCurse`, `ConnectionStrings:RedisCache`, `ConnectionStrings:SeqUrl`
+- `ConnectionStrings:APITechCurse` (formato Npgsql: `Host=...;Port=5432;Database=APITechCurse;Username=...;Password=...;`), `ConnectionStrings:RedisCache`, `ConnectionStrings:SeqUrl`
 - `Jwt:Issuer`, `Jwt:Audience`, `Jwt:SigningKey` (mínimo 32 caracteres — o startup lança exceção se for menor). Gere com `openssl rand -base64 48`
 - `Jwt:RefreshTokenDays` — validade do refresh token (padrão 7)
 - `RateLimiting:Enabled` (padrão `true`), `RateLimiting:GlobalPermitLimit` (200), `RateLimiting:GlobalWindowSeconds` (60), `RateLimiting:AuthPermitLimit` (10), `RateLimiting:AuthWindowSeconds` (60)
 - `Cors:AllowedOrigins` — origens permitidas para o front-end, separadas por vírgula (ex.: `http://localhost:4200`). Vazio ou ausente desliga o CORS na prática. No compose chega como `Cors__AllowedOrigins`, alimentada por `CORS_ALLOWED_ORIGINS` no `.env`
-- `UseInMemoryDatabase=true` faz o `EFCoreSetup` pular o registro do SQL Server; é o gancho usado pelos testes de integração
+- `UseInMemoryDatabase=true` faz o `EFCoreSetup` pular o registro do Npgsql e do health check `Database_Postgres`; é o gancho usado pelos testes de integração
 - `ASPNETCORE_ENVIRONMENT` — o `docker-compose.yml` assume `Development` quando ausente. **Não use `Production`** sem antes implementar um gateway de pagamento real; ver "Comportamento de startup"
 - `API_IMAGE` — nome da imagem usada pelo compose (padrão `tech-curse-api:local`). O pipeline define esta variável para validar exatamente a imagem que acabou de construir
 
@@ -156,7 +166,7 @@ Limitação conhecida: migrar no startup é frágil com múltiplas réplicas, qu
 
 ## Imagem e build
 
-- **A variante chiseled precisa ser `-extra`.** `mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra` traz o ICU; a variante sem sufixo não. Sem ICU, o `Microsoft.Data.SqlClient` lança `NotSupportedException: Globalization Invariant Mode is not supported` ao abrir conexão, derrubando o `Migrate()` do startup **e** o health check `Database_SQLServer`. Pelo mesmo motivo, **`InvariantGlobalization` fica `false`** no `Directory.Build.props`. As duas configurações estão acopladas: mexer numa sem a outra quebra o SQL Server. Já custou cinco execuções vermelhas de CI.
+- **A variante chiseled é `-extra`, e `InvariantGlobalization` fica `false` — por herança, não por necessidade comprovada.** `mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra` traz o ICU; a variante sem sufixo não. O par existia porque o `Microsoft.Data.SqlClient` lançava `NotSupportedException: Globalization Invariant Mode is not supported` sem ICU, derrubando o `Migrate()` e o health check — cinco execuções vermelhas de CI até o diagnóstico. O SqlClient saiu com a migração para Npgsql, e o Npgsql em princípio não depende do ICU, mas **isso não foi validado**: a troca ficou deliberadamente fora da migração para não misturar duas causas de falha de CI no mesmo ciclo. É trabalho separado, em commit isolado, mexendo nas duas configurações juntas e observando o job `docker`. Até lá, não altere nenhuma das duas.
 - **Imagens base pinadas por digest**, para que o mesmo commit produza sempre a mesma imagem. Para atualizar o pin:
 
 ```bash
@@ -166,6 +176,7 @@ curl -sI -H "Accept: application/vnd.oci.image.index.v1+json" https://mcr.micros
 - **`--no-restore` no publish exige as flags de RID também no restore.** Com `PublishReadyToRun=true` e nenhum RuntimeIdentifier declarado, o restore não grava o alvo correspondente no `project.assets.json` nem baixa os runtime packs do crossgen, e o publish falha com `NETSDK1047`/`NETSDK1112`. Por isso `--use-current-runtime` aparece nos **dois** passos, mais `--no-self-contained` no publish (a imagem final é a runtime `aspnet`; declarar RID sozinho poderia virar self-contained e inchar a imagem).
 - **`.dockerignore` casa a partir da raiz do contexto.** O padrão `diagram.png` deixou de valer quando o arquivo virou `docs/diagram.png` — 1,4 MB voltaram silenciosamente ao contexto de build até alguém notar. Ao mover arquivo, confira se algum padrão o perseguia.
 - A imagem roda como usuário não-root `app` e não tem shell nem gerenciador de pacotes. Isso impede `HEALTHCHECK` dentro dela e `depends_on: api: service_healthy` no compose — a sondagem tem que ser externa, e é por isso que o pipeline usa laço de retry com `curl`.
+- **O healthcheck do `db` usa `pg_isready -h localhost`, e o `-h` é o ponto.** Durante o `initdb` o entrypoint da imagem `postgres` sobe um servidor temporário que escuta só em socket Unix; `pg_isready` sem `-h` consulta esse socket e responde pronto antes do servidor definitivo aceitar TCP, e a API subiria para ter a conexão recusada. Forçar TCP faz a sonda falhar até o servidor real estar no ar.
 
 ## Pipeline de CI/CD
 
@@ -203,6 +214,9 @@ As tags anteriores a `v2.0.0` (`v1.0`, `v1.2`, `v.1.1`) **não são SemVer váli
 
 - **Migrations vivem em `src/Infrastructure/Migrations/`** (namespace `TechCurse.Infrastructure.Migrations`), mesmo assembly do `TechCurseContext` — por isso não é preciso configurar `MigrationsAssembly()`. O EF localiza migrations pelos atributos `[DbContext]`/`[Migration]`, não por convenção de diretório. Nada fora de `src/` entra em compilação, e o `Dockerfile` copia apenas `src/`: arquivo de código colocado fora dessa árvore é silenciosamente ignorado pelo build.
 - **`Student` tem query filter global (`!IsDeleted`) e é a ponta obrigatória** dos relacionamentos com `Enrollment` e `Payment`, que não têm filtro equivalente. O EF sinaliza isso com `PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning`, emitido na construção do modelo (runtime / comandos `dotnet ef`) — **não** na saída do compilador. Ver "Soft delete: decisão tomada" antes de mexer em qualquer query de `Payment` ou `Enrollment`.
+- **O Npgsql mapeia `DateTime` para `timestamp with time zone` e rejeita escrita com `Kind` diferente de `Utc`** (`ArgumentException: Cannot write DateTime with Kind=Local`). Todo o código de produção usa `DateTime.UtcNow`, inclusive `Payment.PaidAt`, que vem do `ProcessedAt` da `GatewayResponse`. Um adaptador de gateway real precisa devolver `ProcessedAt` em UTC; se devolver hora local, o `SaveChanges` do `ProcessPayment` estoura. `DateTime.Now` é proibido em código que chega ao banco.
+- **`HasFilter` recebe SQL cru no dialeto do provider**, não LINQ. O índice único de `Payment.EnrollmentId` usa `"IsActive" = true`: o Npgsql preserva PascalCase e exige aspas duplas, porque o projeto não usa `UseSnakeCaseNamingConvention`. Sem as aspas o Postgres procura a coluna `isactive` e a migration falha ao aplicar. É o único SQL cru do projeto — mantenha assim.
+- **Trocar de provider é regerar as migrations, não traduzi-las.** Os `.Designer.cs` e o snapshot chamam extensões do provider (`NpgsqlModelBuilderExtensions`, antes `SqlServerModelBuilderExtensions`) estaticamente, então o projeto **não compila** sem o pacote do provider que gerou os arquivos. Foi por isso que a migração para Postgres saiu num único commit: pacote, migrations e os testes que chamam `UseNpgsql` não têm estado intermediário que compile.
 - **Navegações usam `= null!`**, mas escalares obrigatórios variam: `Course` declara `Titulo`, `Descricao`, `Categoria` e `CargaHoraria` como `required`, enquanto `Student` e `Payment` usam `= null!` / `= string.Empty`. Ao montar entidade em teste, confira qual convenção aquela classe segue antes de escrever o object initializer. O build roda com **zero warnings** — se um `dotnet build` seu passar a emitir CS86xx, é código novo, não ruído herdado.
 
 ## Soft delete: decisão tomada

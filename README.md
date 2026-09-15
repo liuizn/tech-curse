@@ -62,7 +62,7 @@ flowchart TD
         EFCore["EF Core 10 & TechCurseContext"]
         Repositories["Repositórios Especializados<br/>(Course, Student, Enrollment, Payment)"]
         RedisCache[("Redis Cache<br/>(Idempotência & Paging)")]
-        SQLServer[("SQL Server 2022<br/>(Banco Relacional)")]
+        PostgreSQL[("PostgreSQL 17<br/>(Banco Relacional)")]
         GatewayAdapter["Payment Gateway Adapter<br/>(Estratégias de Cobrança)"]
         IdentityService["ASP.NET Core Identity & JWT Provider"]
         Logging["Serilog & Seq Sink"]
@@ -83,7 +83,7 @@ flowchart TD
     Commands --> GatewayAdapter
     Queries --> Repositories
     Queries --> RedisCache
-    Repositories --> EFCore --> SQLServer
+    Repositories --> EFCore --> PostgreSQL
     Controllers -.-> IdentityService
     MiddlewareStack -.-> Logging
 ```
@@ -99,7 +99,7 @@ flowchart TD
 | **Padrão Arquitetural** | [MediatR](https://github.com/jbogard/MediatR) | `12.4.1` | Implementação de CQRS, desacoplamento e Pipeline Behaviors |
 | **Validação de Dados** | [FluentValidation](https://fluentvalidation.net/) | `12.1.1` | Validação determinística de contratos no pipeline da aplicação |
 | **Mapeamento & ORM** | [Entity Framework Core 10](https://learn.microsoft.com/ef/core/) | `10.0.11` | ORM relacional com Migrations, Proxies e Tracking otimizado |
-| **Banco de Dados Relacional** | [Microsoft SQL Server](https://www.microsoft.com/sql-server/) | `2022` | Persistência transacional com integridade referencial |
+| **Banco de Dados Relacional** | [PostgreSQL](https://www.postgresql.org/) / [Npgsql.EntityFrameworkCore.PostgreSQL](https://www.npgsql.org/efcore/) | `17` / `10.0.3` | Persistência transacional com integridade referencial e índice parcial |
 | **Cache Distribuído** | [Redis](https://redis.io/) / [StackExchange.Redis](https://stackexchange.github.io/StackExchange.Redis/) | `3.1.31` | Cache em memória para chaves de idempotência e performance |
 | **Autenticação & Segurança** | [ASP.NET Core Identity](https://learn.microsoft.com/aspnet/core/security/authentication/identity) & JWT Bearer | `10.0.11` | Gestão de identidade, controle de credenciais e autorização RBAC |
 | **Observabilidade & Logs** | [Serilog](https://serilog.net/) & [Seq](https://datalust.co/seq) | `10.0.0` | Logging estruturado, Correlation ID e telemetria centralizada |
@@ -114,7 +114,7 @@ flowchart TD
 
 ### Pré-requisitos
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) instalado.
-- [Docker](https://www.docker.com/) e **Docker Compose** instalados (recomendado para SQL Server, Redis e Seq).
+- [Docker](https://www.docker.com/) e **Docker Compose** instalados (recomendado para PostgreSQL, Redis e Seq).
 - Ferramenta `dotnet-ef` global (opcional para rodar migrations manualmente):
   ```bash
   dotnet tool install --global dotnet-ef
@@ -124,7 +124,7 @@ flowchart TD
 
 ### Opção A: Execução Completa via Docker Compose (Recomendado)
 
-Suba toda a infraestrutura (SQL Server, Redis, Seq e API) com um único comando:
+Suba toda a infraestrutura (PostgreSQL, Redis, Seq e API) com um único comando:
 
 ```bash
 # 1. Clonar o repositório
@@ -141,7 +141,7 @@ docker-compose up -d --build
 Os serviços estarão disponíveis em:
 - 🌐 **API / Swagger UI:** [http://localhost:8080/swagger](http://localhost:8080/swagger)
 - 📊 **Seq Dashboard:** [http://localhost:9000](http://localhost:9000)
-- 🗄️ **SQL Server:** `localhost:1433`
+- 🗄️ **PostgreSQL:** `localhost:5433`
 - ⚡ **Redis:** `localhost:6380`
 
 ---
@@ -154,7 +154,7 @@ Caso prefira rodar a API diretamente no host:
 # 1. Criar o arquivo de variáveis de ambiente (lido pelo Docker Compose)
 cp .env.example .env
 
-# 2. Subir apenas os contêineres de dependência (SQL Server, Redis, Seq)
+# 2. Subir apenas os contêineres de dependência (PostgreSQL, Redis, Seq)
 docker-compose up -d db redis seq
 
 # 3. Restaurar dependências da solução
@@ -167,12 +167,20 @@ dotnet ef database update --project src/Infrastructure --startup-project src/Api
 dotnet run --project src/Api
 ```
 
-Não há passo de configuração manual: as connection strings e as chaves de JWT deste caminho vêm de [`src/Api/appsettings.Development.json`](src/Api/appsettings.Development.json), versionado no repositório, apontando para os contêineres do passo 2 (`localhost,1433`, `localhost:6380`, `localhost:5341`). As credenciais ali são de **desenvolvimento local e descartável**, e batem com as do `.env.example` de propósito. Credencial real nunca fica no repositório — chega por variável de ambiente, e sobrescreve o arquivo quando presente.
+Não há passo de configuração manual: as connection strings e as chaves de JWT deste caminho vêm de [`src/Api/appsettings.Development.json`](src/Api/appsettings.Development.json), versionado no repositório, apontando para os contêineres do passo 2 (`localhost:5433`, `localhost:6380`, `localhost:5341`). As credenciais ali são de **desenvolvimento local e descartável**, e batem com as do `.env.example` de propósito. Credencial real nunca fica no repositório — chega por variável de ambiente, e sobrescreve o arquivo quando presente.
+
+Para apontar a API para um PostgreSQL próprio (por exemplo, um contêiner que já roda na porta padrão `5432`), não edite o arquivo versionado — grave a connection string em **User Secrets**, que o host carrega em `Development` com precedência sobre o `appsettings.Development.json`:
+
+```bash
+dotnet user-secrets set "ConnectionStrings:APITechCurse" "Host=localhost;Port=5432;Database=APITechCurse;Username=<usuario>;Password=<senha>;" --project src/Api
+```
+
+O banco não precisa existir: o `Migrate()` do startup o cria, desde que o usuário tenha permissão `CREATEDB`.
 
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)
 - **Liveness:** [http://localhost:5130/health/live](http://localhost:5130/health/live) — responde 200 se o processo está de pé, sem consultar dependência alguma
-- **Readiness:** [http://localhost:5130/health/ready](http://localhost:5130/health/ready) — agrega SQL Server e Redis. Devolve apenas o status agregado para quem não é `Admin`; o detalhe por verificação exige JWT de `Admin`
+- **Readiness:** [http://localhost:5130/health/ready](http://localhost:5130/health/ready) — agrega PostgreSQL e Redis. Devolve apenas o status agregado para quem não é `Admin`; o detalhe por verificação exige JWT de `Admin`
 
 ---
 
@@ -244,7 +252,7 @@ sequenceDiagram
 | **Payment** | `POST` | `/tech-curse/Payment/process` | `Admin` | Processa pagamento — exige `Idempotency-Key` |
 | **Payment** | `POST` | `/tech-curse/Payment/refund` | `Admin` | Estorna pagamento — exige `Idempotency-Key` |
 | **Health** | `GET` | `/health/live` | Público | Liveness: responde 200 se o processo está de pé |
-| **Health** | `GET` | `/health/ready` | Público | Readiness: agrega SQL Server e Redis. O detalhe por verificação exige `Admin` |
+| **Health** | `GET` | `/health/ready` | Público | Readiness: agrega PostgreSQL e Redis. O detalhe por verificação exige `Admin` |
 
 > As rotas usam o nome do controller no singular e em PascalCase (`/tech-curse/Course`, não `/courses`) — é o que `[Route("tech-curse/[controller]")]` produz. O roteamento do ASP.NET não diferencia maiúsculas, mas o plural resulta em 404.
 
@@ -325,7 +333,7 @@ Definido em [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml), em doi
 
 ```
 build da imagem (load, sem push)
-  └─ sobe SQL Server + Redis + Seq + API
+  └─ sobe PostgreSQL + Redis + Seq + API
        └─ sonda /health/ready com retry (até 150s)
             ├─ falhou → despeja logs dos contêineres e encerra SEM publicar
             └─ passou → login no GHCR → docker tag + push
