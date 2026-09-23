@@ -38,7 +38,7 @@ public static class DbInitializer
         }
 
         var configuracao = serviceProvider.GetRequiredService<IConfiguration>();
-        var email = configuracao[ChaveEmailAdmin];
+        var email = configuracao[ChaveEmailAdmin]?.Trim();
         var senha = configuracao[ChaveSenhaAdmin];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
@@ -60,14 +60,24 @@ public static class DbInitializer
             EmailConfirmed = true
         };
 
-        var resultado = await userManager.CreateAsync(admin, senha);
+        var resultadoCriacao = await userManager.CreateAsync(admin, senha);
 
-        if (!resultado.Succeeded)
+        if (!resultadoCriacao.Succeeded)
         {
-            var erros = string.Join("; ", resultado.Errors.Select(e => $"{e.Code}: {e.Description}"));
-            throw new InvalidOperationException($"Não foi possível criar o Admin semeado: {erros}");
+            throw new InvalidOperationException(FormatarErroDeSeed(resultadoCriacao));
         }
 
-        await userManager.AddToRoleAsync(admin, "Admin");
+        var resultadoRole = await userManager.AddToRoleAsync(admin, "Admin");
+
+        if (!resultadoRole.Succeeded)
+        {
+            throw new InvalidOperationException(FormatarErroDeSeed(resultadoRole));
+        }
+    }
+
+    private static string FormatarErroDeSeed(IdentityResult resultado)
+    {
+        var erros = string.Join("; ", resultado.Errors.Select(e => $"{e.Code}: {e.Description}"));
+        return $"Não foi possível criar o Admin semeado: {erros}";
     }
 }

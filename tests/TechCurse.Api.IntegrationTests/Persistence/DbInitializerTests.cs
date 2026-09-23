@@ -124,4 +124,25 @@ public class DbInitializerTests
 
         await acao.Should().ThrowAsync<InvalidOperationException>().WithMessage("*Admin semeado*");
     }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task SeedData_WhenEmailComEspacos_ShouldCriarAdminComEmailApeadoENormalizado()
+    {
+        var configuracao = new Dictionary<string, string?>
+        {
+            ["Seed:Admin:Email"] = $"  {EmailAdmin}  ",
+            ["Seed:Admin:Password"] = SenhaAdmin
+        };
+        await using var provedor = CriarProvedor(Environments.Development, configuracao);
+        using var scope = provedor.CreateScope();
+
+        await DbInitializer.SeedDataAsync(scope.ServiceProvider);
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var admin = await userManager.FindByEmailAsync(EmailAdmin);
+        admin.Should().NotBeNull();
+        admin!.Email.Should().Be(EmailAdmin);
+        admin.UserName.Should().Be("admin.semeado");
+    }
 }
