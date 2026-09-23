@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
 using TechCurse.Infrastructure.Data;
+using TechCurse.Infrastructure.Repositories;
 
 namespace TechCurse.Api.IntegrationTests.Persistence;
 
@@ -127,5 +128,76 @@ public class PaymentPersistenceTests
         Assert.Single(payments);
         Assert.Equal(PaymentStatus.Paid, payments[0].Status);
         Assert.Equal(payment.PaymentId, payments[0].PaymentId);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task AtualizarPagamento_NaoDeveAnexarNavegacoesDeMatriculaCursoEEstudante()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var options = new DbContextOptionsBuilder<TechCurseContext>()
+            .UseInMemoryDatabase(databaseName)
+            .Options;
+
+        int paymentId;
+        await using (var seedContext = new TechCurseContext(options))
+        {
+            var student = new Student
+            {
+                Nome = "Aluno Persistencia",
+                Email = "aluno.persistencia@techcurse.com",
+                IdentityUserId = "persistencia-user"
+            };
+            var course = new Course
+            {
+                Titulo = "Curso Persistencia",
+                Descricao = "Desc",
+                Categoria = "Tech",
+                CargaHoraria = 10
+            };
+            seedContext.Students.Add(student);
+            seedContext.Courses.Add(course);
+            await seedContext.SaveChangesAsync();
+
+            var enrollment = new Enrollment
+            {
+                StudentId = student.StudentId,
+                CourseId = course.CourseId,
+                DataMatricula = DateTime.UtcNow,
+                Status = true
+            };
+            seedContext.Enrollments.Add(enrollment);
+            await seedContext.SaveChangesAsync();
+
+            var payment = new Payment
+            {
+                EnrollmentId = enrollment.EnrollmentId,
+                StudentId = student.StudentId,
+                Amount = 100.00m,
+                Status = PaymentStatus.Pending,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            seedContext.Payments.Add(payment);
+            await seedContext.SaveChangesAsync();
+            paymentId = payment.PaymentId;
+        }
+
+        await using var readContext = new TechCurseContext(options);
+        var repository = new PaymentRepository(readContext);
+
+        var payment2 = await repository.GetByIdAsync(paymentId);
+        Assert.NotNull(payment2);
+
+        payment2!.Status = PaymentStatus.Paid;
+        await repository.UpdateAsync(payment2);
+
+        Assert.Empty(readContext.ChangeTracker.Entries<Course>());
+        Assert.Empty(readContext.ChangeTracker.Entries<Enrollment>());
+        Assert.Empty(readContext.ChangeTracker.Entries<Student>());
+
+        await using var verifyContext = new TechCurseContext(options);
+        var reloaded = await verifyContext.Payments.FirstAsync(p => p.PaymentId == paymentId);
+        Assert.Equal(PaymentStatus.Paid, reloaded.Status);
     }
 }

@@ -92,7 +92,7 @@ public class PaymentRepository : IPaymentRepository
 
     public async Task UpdateAsync(Payment payment)
     {
-        _context.Payments.Update(payment);
+        _context.Entry(payment).State = EntityState.Modified;
         await _context.SaveChangesAsync();
     }
 
