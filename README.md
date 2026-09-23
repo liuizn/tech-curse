@@ -138,6 +138,8 @@ cp .env.example .env
 docker-compose up -d --build
 ```
 
+A stack sobe em `Development` e, com os valores do `.env.example`, cria no startup o Admin `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`. Troque a senha se a máquina for acessível por outras pessoas, ou deixe as duas variáveis vazias no `.env` para não semear. Veja a seção "Admin de desenvolvimento", mais abaixo.
+
 Os serviços estarão disponíveis em:
 - 🌐 **API / Swagger UI:** [http://localhost:8080/swagger](http://localhost:8080/swagger)
 - 📊 **Seq Dashboard:** [http://localhost:9000](http://localhost:9000)
@@ -192,6 +194,8 @@ dotnet user-secrets set "Seed:Admin:Password" "<senha forte>" --project src/Api
 ```
 
 Pelo compose, preencha `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD` no `.env`.
+
+O nome de usuário do Admin semeado é a parte do e-mail antes do `@`. Se esse nome colidir com o de um usuário existente ou tiver caractere não aceito pelo Identity, o startup em `Development` falha com a mensagem do Identity — use outro e-mail.
 
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)
