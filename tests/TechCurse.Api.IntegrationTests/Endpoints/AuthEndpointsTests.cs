@@ -259,4 +259,31 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         using var documento = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         documento.RootElement.GetProperty("errors").TryGetProperty("DuplicateEmail", out _).Should().BeTrue();
     }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenRoleInexistente_ShouldReturn422_ENaoCriarUsuario()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"role_invalida_{Guid.NewGuid():N}@techcurse.com";
+        var corpo = new
+        {
+            name = $"roleinvalida{Guid.NewGuid():N}",
+            email,
+            role = 99,
+            password = "SenhaForte@123",
+            confirmPassword = "SenhaForte@123"
+        };
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", corpo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var documento = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        documento.RootElement.GetProperty("errors").TryGetProperty("Role", out _).Should().BeTrue();
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().BeNull();
+    }
 }

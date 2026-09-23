@@ -42,6 +42,14 @@ public class AuthService : IAuthService
 
     private async Task<IdentityUser> CriarUsuarioAsync(string nome, string email, string senha, string confirmacaoSenha, UserRole role)
     {
+        if (!Enum.IsDefined(role))
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                { "Role", new[] { "A role informada é inválida." } }
+            });
+        }
+
         if (senha != confirmacaoSenha)
         {
             throw new ValidationException(new Dictionary<string, string[]>
