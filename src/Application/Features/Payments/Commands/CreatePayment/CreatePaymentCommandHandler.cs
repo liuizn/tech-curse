@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using TechCurse.Application.DTOs;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
@@ -14,11 +15,6 @@ public class CreatePaymentCommandHandler : IRequestHandler<CreatePaymentCommand,
     private readonly IPaymentRepository _paymentRepository;
     private readonly ICacheService _cacheService;
     private readonly ILogger<CreatePaymentCommandHandler> _logger;
-
-    private const string PAYMENT_LIST_PREFIX = "payments:list:";
-    private const string PAYMENT_ITEM_PREFIX = "payments:item:";
-    private const string PAYMENT_BY_STUDENT_PREFIX = "payments:student:";
-    private const string PAYMENT_BY_ENROLLMENT_PREFIX = "payments:enrollment:";
 
     public CreatePaymentCommandHandler(IEnrollmentRepository enrollmentRepository, IPaymentRepository paymentRepository, ICacheService cacheService, ILogger<CreatePaymentCommandHandler> logger)
     {
@@ -57,7 +53,8 @@ public class CreatePaymentCommandHandler : IRequestHandler<CreatePaymentCommand,
             Amount = request.Amount,
             Status = PaymentStatus.Pending,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Enrollment = enrollment
         };
 
         await _paymentRepository.AddAsync(newPayment);
@@ -66,17 +63,14 @@ public class CreatePaymentCommandHandler : IRequestHandler<CreatePaymentCommand,
         _logger.LogInformation("Intenção de pagamento criada com sucesso. PaymentId: {PaymentId}, EnrollmentId: {EnrollmentId}",
             newPayment.PaymentId, newPayment.EnrollmentId);
 
-        return new PaymentOutputDto(
-            newPayment.PaymentId, newPayment.EnrollmentId, newPayment.StudentId, newPayment.Amount,
-            newPayment.Status, newPayment.IsActive, newPayment.CreatedAt, null, null
-        );
+        return newPayment.ParaDto();
     }
 
     private async Task ClearPaymentCachesAsync()
     {
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_LIST_PREFIX);
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_ITEM_PREFIX);
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_BY_STUDENT_PREFIX);
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_BY_ENROLLMENT_PREFIX);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.Lista);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.Item);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.PorEstudante);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.PorMatricula);
     }
 }

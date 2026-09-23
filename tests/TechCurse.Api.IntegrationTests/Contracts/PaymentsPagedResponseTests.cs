@@ -40,7 +40,9 @@ public class PaymentsPagedResponseTests
             p.IsActive,
             p.CreatedAt,
             p.PaidAt,
-            p.ExternalTransactionId
+            p.ExternalTransactionId,
+            1,
+            "Curso de Teste"
         )).ToList();
 
         var responseObject = new PagedResultDto<PaymentOutputDto>(
@@ -92,6 +94,8 @@ public class PaymentsPagedResponseTests
             Assert.Equal(paymentsOutputDto[i].CreatedAt, responseContent[i].CreatedAt);
             Assert.Equal(paymentsOutputDto[i].PaidAt, responseContent[i].PaidAt);
             Assert.Equal(paymentsOutputDto[i].ExternalTransactionId, responseContent[i].ExternalTransactionId);
+            Assert.Equal(paymentsOutputDto[i].CourseId, responseContent[i].CourseId);
+            Assert.Equal(paymentsOutputDto[i].CourseTitulo, responseContent[i].CourseTitulo);
         }
 
         Assert.Equal(1, pagedResponse.PageNumber);

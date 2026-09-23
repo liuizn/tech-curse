@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using TechCurse.Application.DTOs;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Enums;
 using TechCurse.Domain.Exceptions;
@@ -13,11 +14,6 @@ public class RefundPaymentCommandHandler : IRequestHandler<RefundPaymentCommand,
     private readonly IPaymentGatewayAdapter _paymentGateway;
     private readonly ICacheService _cacheService;
     private readonly ILogger<RefundPaymentCommandHandler> _logger;
-
-    private const string PAYMENT_LIST_PREFIX = "payments:list:";
-    private const string PAYMENT_ITEM_PREFIX = "payments:item:";
-    private const string PAYMENT_BY_STUDENT_PREFIX = "payments:student:";
-    private const string PAYMENT_BY_ENROLLMENT_PREFIX = "payments:enrollment:";
 
     public RefundPaymentCommandHandler(
         IPaymentRepository paymentRepository,
@@ -77,9 +73,9 @@ public class RefundPaymentCommandHandler : IRequestHandler<RefundPaymentCommand,
 
     private async Task ClearPaymentCachesAsync()
     {
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_LIST_PREFIX);
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_ITEM_PREFIX);
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_BY_STUDENT_PREFIX);
-        await _cacheService.RemoveByPrefixAsync(PAYMENT_BY_ENROLLMENT_PREFIX);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.Lista);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.Item);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.PorEstudante);
+        await _cacheService.RemoveByPrefixAsync(ChavesDeCachePagamento.PorMatricula);
     }
 }

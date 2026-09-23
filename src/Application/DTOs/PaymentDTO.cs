@@ -3,7 +3,7 @@ using TechCurse.Domain.Enums;
 
 namespace TechCurse.Application.DTOs;
 
-public record PaymentOutputDto(int PaymentId, int EnrollmentId, int StudentId, decimal Amount, PaymentStatus Status, bool IsActive, DateTime CreatedAt, DateTime? PaidAt, string? ExternalTransactionId);
+public record PaymentOutputDto(int PaymentId, int EnrollmentId, int StudentId, decimal Amount, PaymentStatus Status, bool IsActive, DateTime CreatedAt, DateTime? PaidAt, string? ExternalTransactionId, int CourseId, string CourseTitulo);
 
 public record CreatePaymentDto([Required] int EnrollmentId, [Required] decimal Amount);
 public record ProcessPaymentDto(int PaymentId, [Required] PaymentMethodType type);

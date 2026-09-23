@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TechCurse.Application.DTOs;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Features.Payments.Commands.RefundPayment;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
@@ -145,6 +146,6 @@ public class RefundPaymentCommandHandlerTests
         payment.RefundedAt.Should().NotBeNull();
 
         _paymentRepositoryMock.Verify(r => r.UpdateAsync(payment), Times.Once);
-        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync("payments:list:"), Times.Once);
+        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync(ChavesDeCachePagamento.Lista), Times.Once);
     }
 }

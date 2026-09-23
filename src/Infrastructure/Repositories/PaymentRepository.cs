@@ -21,6 +21,8 @@ public class PaymentRepository : IPaymentRepository
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(p => p.Student)
+            .Include(p => p.Enrollment)
+                .ThenInclude(e => e.Course)
             .FirstOrDefaultAsync(p => p.PaymentId == id);
     }
 
@@ -29,6 +31,8 @@ public class PaymentRepository : IPaymentRepository
         var query = _context.Payments
             .AsQueryable()
             .AsNoTracking()
+            .Include(p => p.Enrollment)
+                .ThenInclude(e => e.Course)
             .Where(p => p.StudentId == studentId);
 
         var totalCount = await query.CountAsync();
@@ -50,6 +54,8 @@ public class PaymentRepository : IPaymentRepository
             .IgnoreQueryFilters()
             .Include(p => p.Enrollment)
                 .ThenInclude(e => e.Student)
+            .Include(p => p.Enrollment)
+                .ThenInclude(e => e.Course)
             .Where(p => p.EnrollmentId == enrollmentId);
 
         var items = await query
@@ -61,7 +67,11 @@ public class PaymentRepository : IPaymentRepository
 
     public async Task<(IEnumerable<Payment> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto searchParams)
     {
-        var query = _context.Payments.AsQueryable().AsNoTracking();
+        var query = _context.Payments
+            .AsQueryable()
+            .AsNoTracking()
+            .Include(p => p.Enrollment)
+                .ThenInclude(e => e.Course);
 
         var totalCount = await query.CountAsync();
 
