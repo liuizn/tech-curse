@@ -26,7 +26,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 - `POST /tech-curse/Auth/users` (Admin): cria usuário com role `Admin`, `Instructor` ou `Student`.
 - Admin semeado em `Development` a partir de `Seed:Admin:Email`/`Seed:Admin:Password` (user-secrets ou `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` no compose).
-- O cadastro de aluno (`POST /tech-curse/Auth/register`, e `POST /tech-curse/Auth/users` com role `Student`) cria o perfil de estudante automaticamente; se a gravação falhar, o usuário é removido. E-mail que já tem perfil responde 409.
+- O cadastro de aluno (`POST /tech-curse/Auth/register`, e `POST /tech-curse/Auth/users` com role `Student`) cria o perfil de estudante automaticamente; se a gravação falhar, o usuário é removido. E-mail com perfil de estudante sem usuário responde 409; e-mail de usuário já existente continua 422 `DuplicateEmail`.
 - `PaymentOutputDto` ganha `courseId` e `courseTitulo`; `CourseStudentOutputDto` (matrículas do estudante) ganha `enrollmentId`.
 
 ### 🔄 Alterado
