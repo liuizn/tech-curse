@@ -56,8 +56,16 @@ public class StudentRepository : IStudentRepository
 
     public async Task AddAsync(Student student)
     {
-        await _context.Students.AddAsync(student);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.Students.AddAsync(student);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            _context.Entry(student).State = EntityState.Detached;
+            throw;
+        }
     }
 
     public async Task UpdateAsync(Student student)

@@ -111,13 +111,33 @@ public class AuthService : IAuthService
                 });
             }
         }
-        catch
+        catch (Exception erroOriginal)
         {
-            await _userManager.DeleteAsync(user);
+            await DesfazerCriacaoDoUsuarioAsync(user, erroOriginal);
             throw;
         }
 
         return user;
+    }
+
+    private async Task DesfazerCriacaoDoUsuarioAsync(IdentityUser user, Exception erroOriginal)
+    {
+        IdentityResult resultado;
+
+        try
+        {
+            resultado = await _userManager.DeleteAsync(user);
+        }
+        catch (Exception erroNaExclusao)
+        {
+            throw new AggregateException("Falha ao criar o usuário e ao desfazer a criação.", erroOriginal, erroNaExclusao);
+        }
+
+        if (!resultado.Succeeded)
+        {
+            var erros = string.Join("; ", resultado.Errors.Select(e => $"{e.Code}: {e.Description}"));
+            throw new AggregateException($"Falha ao criar o usuário e ao desfazer a criação: {erros}", erroOriginal);
+        }
     }
 
     public async Task<AuthOutputDto?> LoginAsync(LoginInputDto input)

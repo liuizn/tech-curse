@@ -15,6 +15,7 @@ using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
 using TechCurse.Infrastructure.Data;
+using TechCurse.Infrastructure.Repositories;
 using Xunit;
 
 namespace TechCurse.Api.IntegrationTests.Endpoints;
@@ -432,5 +433,77 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         using var scope = fabrica.Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         (await userManager.FindByEmailAsync(email)).Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Register_WhenGravacaoDoPerfilFalhaNoBanco_ShouldApagarOUsuario()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var studentIdEmConflito = Random.Shared.Next(1_000_000, 2_000_000);
+        await _factory.ExecuteDbContextAsync(async context =>
+        {
+            var donoDoConflito = new IdentityUser { Id = $"conflito-{Guid.NewGuid():N}", UserName = $"conflito{Guid.NewGuid():N}", Email = $"conflito_{Guid.NewGuid():N}@techcurse.com" };
+            context.Users.Add(donoDoConflito);
+            context.Students.Add(new Student { StudentId = studentIdEmConflito, Nome = "Conflito", Email = $"conflito_perfil_{Guid.NewGuid():N}@techcurse.com", IdentityUserId = donoDoConflito.Id, DataCadastro = DateTime.UtcNow, IsDeleted = false });
+            await context.SaveChangesAsync();
+        });
+        using var fabrica = _factory.WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services =>
+                services.AddScoped<IStudentRepository>(sp => new StudentRepositoryComConflitoDeChave(sp.GetRequiredService<TechCurseContext>(), studentIdEmConflito))));
+        var anonimo = fabrica.CreateClient();
+        var email = $"conflito_registro_{Guid.NewGuid():N}@techcurse.com";
+
+        var resposta = await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", new RegisterInputDto($"conflito{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123"));
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        using var scope = fabrica.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        (await userManager.FindByEmailAsync(email)).Should().BeNull();
+    }
+
+    private sealed class StudentRepositoryComConflitoDeChave : IStudentRepository
+    {
+        private readonly StudentRepository _repositorioReal;
+        private readonly int _studentIdEmConflito;
+
+        public StudentRepositoryComConflitoDeChave(TechCurseContext context, int studentIdEmConflito)
+        {
+            _repositorioReal = new StudentRepository(context);
+            _studentIdEmConflito = studentIdEmConflito;
+        }
+
+        public Task AddAsync(Student student)
+        {
+            student.StudentId = _studentIdEmConflito;
+            return _repositorioReal.AddAsync(student);
+        }
+
+        public Task<(IEnumerable<Student> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto searchParams)
+            => _repositorioReal.GetPagedAsync(searchParams);
+
+        public Task<IEnumerable<Student>> GetAllAsync()
+            => _repositorioReal.GetAllAsync();
+
+        public Task<Student?> GetByIdAsync(int id)
+            => _repositorioReal.GetByIdAsync(id);
+
+        public Task<Student?> GetByEmailAsync(string email)
+            => _repositorioReal.GetByEmailAsync(email);
+
+        public Task<IEnumerable<CourseStudentOutputDto>> GetCoursesAsync(Student student)
+            => _repositorioReal.GetCoursesAsync(student);
+
+        public Task UpdateAsync(Student student)
+            => _repositorioReal.UpdateAsync(student);
+
+        public Task DeleteAsync(Student student)
+            => _repositorioReal.DeleteAsync(student);
+
+        public Task<bool> EmailExistsAsync(string email)
+            => _repositorioReal.EmailExistsAsync(email);
+
+        public Task<bool> StudentIsActiveAsync(Student student)
+            => _repositorioReal.StudentIsActiveAsync(student);
     }
 }
