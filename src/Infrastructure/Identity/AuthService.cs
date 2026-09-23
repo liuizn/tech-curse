@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Interfaces;
+using TechCurse.Domain.Enums;
 using TechCurse.Domain.Exceptions;
 
 namespace TechCurse.Infrastructure.Identity;
@@ -29,7 +30,27 @@ public class AuthService : IAuthService
 
     public async Task<bool> RegisterAsync(RegisterInputDto input)
     {
-        if (input.Password != input.ConfirmPassword)
+        await CriarUsuarioAsync(input.Name, input.Email, input.Password, input.ConfirmPassword, UserRole.Student);
+
+        return true;
+    }
+
+    public async Task CreateUserAsync(CreateUserInputDto input)
+    {
+        await CriarUsuarioAsync(input.Name, input.Email, input.Password, input.ConfirmPassword, input.Role);
+    }
+
+    private async Task<IdentityUser> CriarUsuarioAsync(string nome, string email, string senha, string confirmacaoSenha, UserRole role)
+    {
+        if (!Enum.IsDefined(role))
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                { "Role", new[] { "A role informada é inválida." } }
+            });
+        }
+
+        if (senha != confirmacaoSenha)
         {
             throw new ValidationException(new Dictionary<string, string[]>
             {
@@ -37,21 +58,19 @@ public class AuthService : IAuthService
             });
         }
 
-        var user = new IdentityUser { UserName = input.Name, Email = input.Email };
+        var user = new IdentityUser { UserName = nome, Email = email };
 
-        var result = await _userManager.CreateAsync(user, input.Password);
+        var result = await _userManager.CreateAsync(user, senha);
 
         if (result.Succeeded == false)
         {
-            Dictionary<string, string[]> errorList = new Dictionary<string, string[]>();
+            var errorList = new Dictionary<string, string[]>();
 
             foreach (var error in result.Errors)
             {
-                if (errorList.ContainsKey(error.Code))
+                if (errorList.TryGetValue(error.Code, out var existingErrors))
                 {
-                    var existingErrors = errorList[error.Code];
-                    var updatedErrors = existingErrors.Concat(new[] { error.Description }).ToArray();
-                    errorList[error.Code] = updatedErrors;
+                    errorList[error.Code] = existingErrors.Concat(new[] { error.Description }).ToArray();
                 }
                 else
                 {
@@ -62,11 +81,9 @@ public class AuthService : IAuthService
             throw new ValidationException(errorList);
         }
 
-        string roleName = input.Role.ToString();
+        await _userManager.AddToRoleAsync(user, role.ToString());
 
-        await _userManager.AddToRoleAsync(user, roleName);
-
-        return true;
+        return user;
     }
 
     public async Task<AuthOutputDto?> LoginAsync(LoginInputDto input)

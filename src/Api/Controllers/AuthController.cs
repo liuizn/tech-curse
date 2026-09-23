@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Swashbuckle.AspNetCore.Annotations;
@@ -25,17 +26,34 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     [SwaggerOperation(
         Summary = "Registra um novo usuário no sistema.",
-        Description = "**Acesso:** Público."
+        Description = "**Acesso:** Público. O usuário é sempre criado com a role Student."
     )]
     [SwaggerResponse(StatusCodes.Status201Created, "Usuário registrado com sucesso.", typeof(MensagemOutputDto))]
-    [SwaggerResponse(StatusCodes.Status409Conflict, "Conflito. O e-mail informado já está em uso.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "Erro de validação nos campos enviados.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de requisições de autenticação excedido.", typeof(ProblemDetails))]
     public async Task<IActionResult> Register([FromBody] RegisterInputDto input)
     {
-        var actionResult = await _authService.RegisterAsync(input);
+        await _authService.RegisterAsync(input);
 
         return StatusCode(201, new MensagemOutputDto("Usuário registrado com sucesso."));
+    }
+
+    [HttpPost("users")]
+    [Authorize(Roles = "Admin")]
+    [SwaggerOperation(
+        Summary = "Cria um usuário com a role informada.",
+        Description = "**Acesso:** Requer role de Admin."
+    )]
+    [SwaggerResponse(StatusCodes.Status201Created, "Usuário criado com sucesso.", typeof(MensagemOutputDto))]
+    [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuário não autenticado.", typeof(ProblemDetails))]
+    [SwaggerResponse(StatusCodes.Status403Forbidden, "Acesso negado.", typeof(ProblemDetails))]
+    [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "Erro de validação nos campos enviados.", typeof(ProblemDetails))]
+    [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de requisições de autenticação excedido.", typeof(ProblemDetails))]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserInputDto input)
+    {
+        await _authService.CreateUserAsync(input);
+
+        return StatusCode(201, new MensagemOutputDto("Usuário criado com sucesso."));
     }
 
     [HttpPost("login")]

@@ -16,6 +16,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 | **Banco relacional passou de SQL Server 2022 para PostgreSQL 17** | A connection string `ConnectionStrings:APITechCurse` muda de formato: `Host=...;Port=5432;Database=APITechCurse;Username=...;Password=...;`. Não há migração de dados: as migrations foram regeradas do zero, e um banco SQL Server existente não é reaproveitável |
 | Health check `Database_SQLServer` renomeado para `Database_Postgres` | Ajuste dashboards ou alertas que filtram pelo nome no detalhe de `/health/ready` |
 | Porta do banco no compose passou de `1433` para `5433` no host | Clientes locais apontam para `localhost:5433`; o volume `sqlserver_data` foi substituído por `postgres_data` — rode `docker compose down -v` para descartar o antigo |
+| `POST /tech-curse/Auth/register` não aceita mais `role`: o usuário é sempre criado como `Student` | Clientes que criavam Admin ou Instructor pelo registro passam a usar `POST /tech-curse/Auth/users` autenticados como Admin. O campo `role` enviado no registro é ignorado |
+
+### 🔐 Segurança
+
+- O registro público aceitava a role no corpo e permitia que qualquer pessoa se cadastrasse como `Admin`. Agora `POST /tech-curse/Auth/register` cria sempre `Student`.
+
+### ✨ Adicionado
+
+- `POST /tech-curse/Auth/users` (Admin): cria usuário com role `Admin`, `Instructor` ou `Student`.
+- Admin semeado em `Development` a partir de `Seed:Admin:Email`/`Seed:Admin:Password` (user-secrets ou `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` no compose).
 
 ### 🔄 Alterado
 

@@ -138,6 +138,8 @@ cp .env.example .env
 docker-compose up -d --build
 ```
 
+A stack sobe em `Development` e, com os valores do `.env.example`, cria no startup o Admin `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`. Troque a senha se a máquina for acessível por outras pessoas, ou deixe as duas variáveis vazias no `.env` para não semear. Veja a seção "Admin de desenvolvimento", mais abaixo.
+
 Os serviços estarão disponíveis em:
 - 🌐 **API / Swagger UI:** [http://localhost:8080/swagger](http://localhost:8080/swagger)
 - 📊 **Seq Dashboard:** [http://localhost:9000](http://localhost:9000)
@@ -176,6 +178,24 @@ dotnet user-secrets set "ConnectionStrings:APITechCurse" "Host=localhost;Port=54
 ```
 
 O banco não precisa existir: o `Migrate()` do startup o cria, desde que o usuário tenha permissão `CREATEDB`.
+
+#### Admin de desenvolvimento
+
+Em `Development`, a API cria um Admin no startup quando `Seed:Admin:Email` e `Seed:Admin:Password` estão configurados. A criação é idempotente (se o e-mail já existe, nada muda) e nunca acontece em outros ambientes. O registro público (`POST /tech-curse/Auth/register`) nunca cria Admin nem Instructor — use `POST /tech-curse/Auth/users` autenticado como Admin.
+
+Rodando a API no host:
+
+```bash
+dotnet user-secrets set "Seed:Admin:Email" "admin@techcurse.dev" --project src/Api
+```
+
+```bash
+dotnet user-secrets set "Seed:Admin:Password" "<senha forte>" --project src/Api
+```
+
+Pelo compose, preencha `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD` no `.env`.
+
+O nome de usuário do Admin semeado é a parte do e-mail antes do `@`. Se esse nome colidir com o de um usuário existente ou tiver caractere não aceito pelo Identity, o startup em `Development` falha com a mensagem do Identity — use outro e-mail.
 
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)
@@ -228,7 +248,8 @@ sequenceDiagram
 
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :---: | :--- | :---: | :--- |
-| **Auth** | `POST` | `/tech-curse/Auth/register` | Público | Registra novo usuário no Identity |
+| **Auth** | `POST` | `/tech-curse/Auth/register` | Público | Registra um novo aluno (a role é sempre Student) |
+| **Auth** | `POST` | `/tech-curse/Auth/users` | Admin | Cria usuário com a role informada (`Admin`, `Instructor` ou `Student`) |
 | **Auth** | `POST` | `/tech-curse/Auth/login` | Público | Autentica e retorna access token + refresh token |
 | **Auth** | `POST` | `/tech-curse/Auth/refresh` | Público | Rotaciona o par de tokens |
 | **Course** | `GET` | `/tech-curse/Course` | Autenticado | Lista catálogo com paginação e filtro por categoria |

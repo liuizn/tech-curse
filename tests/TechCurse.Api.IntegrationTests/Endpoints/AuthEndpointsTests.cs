@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +29,7 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         await _factory.EnsureRolesCreatedAsync();
         var client = _factory.CreateAnonymousClient();
         var email = $"new_auth_user_{Guid.NewGuid():N}@techcurse.com";
-        var input = new RegisterInputDto("NovoUsuario", email, UserRole.Student, "SenhaForte@123", "SenhaForte@123");
+        var input = new RegisterInputDto("NovoUsuario", email, "SenhaForte@123", "SenhaForte@123");
 
         var response = await client.PostAsJsonAsync("/tech-curse/Auth/register", input);
 
@@ -166,5 +167,174 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         }
 
         return (email, senha);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Register_WhenCorpoTrazRoleAdmin_ShouldCriarUsuarioApenasComoStudent()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAnonymousClient();
+        var email = $"tentativa_admin_{Guid.NewGuid():N}@techcurse.com";
+        var corpo = new
+        {
+            name = $"tentativa{Guid.NewGuid():N}",
+            email,
+            role = "Admin",
+            password = "SenhaForte@123",
+            confirmPassword = "SenhaForte@123"
+        };
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/register", corpo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().NotBeNull();
+        var roles = await userManager.GetRolesAsync(usuario!);
+        roles.Should().BeEquivalentTo(new[] { "Student" });
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenAnonimo_ShouldReturn401Unauthorized()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAnonymousClient();
+        var input = new CreateUserInputDto($"anonimo{Guid.NewGuid():N}", $"anonimo_{Guid.NewGuid():N}@techcurse.com", UserRole.Instructor, "SenhaForte@123", "SenhaForte@123");
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", input);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenStudent_ShouldReturn403Forbidden()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateStudentClient();
+        var input = new CreateUserInputDto($"aluno{Guid.NewGuid():N}", $"aluno_{Guid.NewGuid():N}@techcurse.com", UserRole.Admin, "SenhaForte@123", "SenhaForte@123");
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", input);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenAdmin_ShouldReturn201_ECriarNaRolePedida()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"instrutor_{Guid.NewGuid():N}@techcurse.com";
+        var input = new CreateUserInputDto($"instrutor{Guid.NewGuid():N}", email, UserRole.Instructor, "SenhaForte@123", "SenhaForte@123");
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", input);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().NotBeNull();
+        var roles = await userManager.GetRolesAsync(usuario!);
+        roles.Should().BeEquivalentTo(new[] { "Instructor" });
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenEmailEmUso_ShouldReturn422_ComDuplicateEmail()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"repetido_{Guid.NewGuid():N}@techcurse.com";
+        var primeiro = new CreateUserInputDto($"primeiro{Guid.NewGuid():N}", email, UserRole.Instructor, "SenhaForte@123", "SenhaForte@123");
+        var segundo = new CreateUserInputDto($"segundo{Guid.NewGuid():N}", email, UserRole.Instructor, "SenhaForte@123", "SenhaForte@123");
+        (await client.PostAsJsonAsync("/tech-curse/Auth/users", primeiro)).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", segundo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var documento = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        documento.RootElement.GetProperty("errors").TryGetProperty("DuplicateEmail", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenRoleInexistente_ShouldReturn422_ENaoCriarUsuario()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"role_invalida_{Guid.NewGuid():N}@techcurse.com";
+        var corpo = new
+        {
+            name = $"roleinvalida{Guid.NewGuid():N}",
+            email,
+            role = 99,
+            password = "SenhaForte@123",
+            confirmPassword = "SenhaForte@123"
+        };
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", corpo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var documento = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        documento.RootElement.GetProperty("errors").TryGetProperty("Role", out _).Should().BeTrue();
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenRoleAusente_ShouldReturn422_ComRole()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"role_ausente_{Guid.NewGuid():N}@techcurse.com";
+        var corpo = new
+        {
+            name = $"roleausente{Guid.NewGuid():N}",
+            email,
+            password = "SenhaForte@123",
+            confirmPassword = "SenhaForte@123"
+        };
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", corpo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var documento = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        documento.RootElement.GetProperty("errors").TryGetProperty("Role", out _).Should().BeTrue();
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenRoleComNomeDesconhecido_ShouldReturn400()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"role_desconhecida_{Guid.NewGuid():N}@techcurse.com";
+        var corpo = new
+        {
+            name = $"roledesconhecida{Guid.NewGuid():N}",
+            email,
+            role = "SuperAdmin",
+            password = "SenhaForte@123",
+            confirmPassword = "SenhaForte@123"
+        };
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", corpo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().BeNull();
     }
 }
