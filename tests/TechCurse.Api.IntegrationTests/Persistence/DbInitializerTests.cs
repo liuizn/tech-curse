@@ -127,6 +127,26 @@ public class DbInitializerTests
 
     [Fact]
     [Trait("Category", "Integration")]
+    public async Task SeedData_WhenEmailJaPertenceAUsuarioSemRoleAdmin_ShouldNaoAlterarOUsuario()
+    {
+        await using var provedor = CriarProvedor(Environments.Development, ConfiguracaoCompleta());
+        using var scope = provedor.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var senhaOriginal = "OutraSenhaForte@123";
+        var usuarioExistente = new IdentityUser { UserName = "usuario.existente", Email = EmailAdmin };
+        (await userManager.CreateAsync(usuarioExistente, senhaOriginal)).Succeeded.Should().BeTrue();
+
+        var acao = () => DbInitializer.SeedDataAsync(scope.ServiceProvider);
+
+        await acao.Should().NotThrowAsync();
+        var context = scope.ServiceProvider.GetRequiredService<TechCurseContext>();
+        var usuario = await context.Users.AsNoTracking().SingleAsync(u => u.Email == EmailAdmin);
+        usuario.PasswordHash.Should().Be(usuarioExistente.PasswordHash);
+        (await userManager.GetRolesAsync(usuarioExistente)).Should().BeEmpty();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
     public async Task SeedData_WhenEmailComEspacos_ShouldCriarAdminComEmailApeadoENormalizado()
     {
         var configuracao = new Dictionary<string, string?>

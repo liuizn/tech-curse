@@ -29,7 +29,6 @@ public class AuthController : ControllerBase
         Description = "**Acesso:** Público. O usuário é sempre criado com a role Student."
     )]
     [SwaggerResponse(StatusCodes.Status201Created, "Usuário registrado com sucesso.", typeof(MensagemOutputDto))]
-    [SwaggerResponse(StatusCodes.Status409Conflict, "Conflito. O e-mail informado já está em uso.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "Erro de validação nos campos enviados.", typeof(ProblemDetails))]
     [SwaggerResponse(StatusCodes.Status429TooManyRequests, "Limite de requisições de autenticação excedido.", typeof(ProblemDetails))]
     public async Task<IActionResult> Register([FromBody] RegisterInputDto input)

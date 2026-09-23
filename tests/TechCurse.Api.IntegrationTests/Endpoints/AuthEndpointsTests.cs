@@ -286,4 +286,55 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var usuario = await userManager.FindByEmailAsync(email);
         usuario.Should().BeNull();
     }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenRoleAusente_ShouldReturn422_ComRole()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"role_ausente_{Guid.NewGuid():N}@techcurse.com";
+        var corpo = new
+        {
+            name = $"roleausente{Guid.NewGuid():N}",
+            email,
+            password = "SenhaForte@123",
+            confirmPassword = "SenhaForte@123"
+        };
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", corpo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var documento = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        documento.RootElement.GetProperty("errors").TryGetProperty("Role", out _).Should().BeTrue();
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenRoleComNomeDesconhecido_ShouldReturn400()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var client = _factory.CreateAdminClient();
+        var email = $"role_desconhecida_{Guid.NewGuid():N}@techcurse.com";
+        var corpo = new
+        {
+            name = $"roledesconhecida{Guid.NewGuid():N}",
+            email,
+            role = "SuperAdmin",
+            password = "SenhaForte@123",
+            confirmPassword = "SenhaForte@123"
+        };
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Auth/users", corpo);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().BeNull();
+    }
 }

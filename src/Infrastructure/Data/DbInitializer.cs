@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace TechCurse.Infrastructure.Data;
 
@@ -9,6 +10,7 @@ public static class DbInitializer
 {
     private const string ChaveEmailAdmin = "Seed:Admin:Email";
     private const string ChaveSenhaAdmin = "Seed:Admin:Password";
+    private const string CategoriaDoLog = "TechCurse.Infrastructure.Data.DbInitializer";
 
     public static async Task SeedDataAsync(IServiceProvider serviceProvider)
     {
@@ -48,8 +50,18 @@ public static class DbInitializer
 
         var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-        if (await userManager.FindByEmailAsync(email) is not null)
+        var usuarioExistente = await userManager.FindByEmailAsync(email);
+
+        if (usuarioExistente is not null)
         {
+            if (!await userManager.IsInRoleAsync(usuarioExistente, "Admin"))
+            {
+                var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(CategoriaDoLog);
+                logger.LogWarning(
+                    "O e-mail {Email} configurado para o Admin semeado já pertence a um usuário sem a role Admin; o seed não alterou esse usuário.",
+                    email);
+            }
+
             return;
         }
 
