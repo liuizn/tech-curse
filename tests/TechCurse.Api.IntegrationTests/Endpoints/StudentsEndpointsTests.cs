@@ -201,4 +201,38 @@ public class StudentsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task GetEnrollments_WhenAdmin_ShouldIncluirEnrollmentId()
+    {
+        var studentId = 0;
+        var enrollmentId = 0;
+        var courseId = 0;
+        await _factory.ExecuteDbContextAsync(async context =>
+        {
+            var usuario = new IdentityUser { Id = $"matriculas-{Guid.NewGuid():N}", UserName = $"matriculas{Guid.NewGuid():N}", Email = $"matriculas_{Guid.NewGuid():N}@techcurse.com" };
+            context.Users.Add(usuario);
+            var aluno = new Student { Nome = "Aluno Matriculas", Email = usuario.Email!, IdentityUserId = usuario.Id, DataCadastro = DateTime.UtcNow, IsDeleted = false };
+            context.Students.Add(aluno);
+            var curso = new Course { Titulo = $"Curso Matriculas {Guid.NewGuid():N}", Descricao = "Desc", Categoria = "Tech", CargaHoraria = 10, DataCriacao = DateTime.UtcNow };
+            context.Courses.Add(curso);
+            await context.SaveChangesAsync();
+            var matricula = new Enrollment { StudentId = aluno.StudentId, CourseId = curso.CourseId, DataMatricula = DateTime.UtcNow, Status = true };
+            context.Enrollments.Add(matricula);
+            await context.SaveChangesAsync();
+            studentId = aluno.StudentId;
+            enrollmentId = matricula.EnrollmentId;
+            courseId = curso.CourseId;
+        });
+        var admin = _factory.CreateAdminClient();
+
+        var resposta = await admin.GetAsync($"/tech-curse/Student/{studentId}/enrollments");
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        var matriculas = await resposta.Content.ReadFromJsonAsync<List<CourseStudentOutputDto>>();
+        matriculas.Should().ContainSingle();
+        matriculas![0].EnrollmentId.Should().Be(enrollmentId);
+        matriculas[0].CourseId.Should().Be(courseId);
+    }
 }

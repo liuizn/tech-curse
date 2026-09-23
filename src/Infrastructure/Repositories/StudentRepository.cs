@@ -47,7 +47,8 @@ public class StudentRepository : IStudentRepository
                 e.Course.Titulo,
                 e.Course.Descricao,
                 e.Course.Categoria,
-                e.Status
+                e.Status,
+                e.EnrollmentId
             ))
             .ToListAsync();
 
