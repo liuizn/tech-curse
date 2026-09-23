@@ -60,6 +60,8 @@ services:
       - ConnectionStrings__APITechCurse=Host=db;Port=5432;Database=APITechCurse;Username=postgres;Password=${DB_PASSWORD};
       - ConnectionStrings__RedisCache=redis:6379,password=${REDIS_PASSWORD},abortConnect=false,connectTimeout=5000
       - ConnectionStrings__SeqUrl=http://seq:5341
+      - Seed__Admin__Email=${SEED_ADMIN_EMAIL:-}
+      - Seed__Admin__Password=${SEED_ADMIN_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy

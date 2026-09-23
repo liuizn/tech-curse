@@ -41,10 +41,10 @@
                 "register"
               ]
             },
-            "description": "role aceita Admin, Instructor ou Student.",
+            "description": "Cria sempre um Student; role enviado no corpo e ignorado.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Aluno Exemplo\",\n  \"email\": \"aluno@techcurse.com\",\n  \"role\": \"Student\",\n  \"password\": \"SenhaForte1!\",\n  \"confirmPassword\": \"SenhaForte1!\"\n}",
+              "raw": "{\n  \"name\": \"Aluno Exemplo\",\n  \"email\": \"aluno@techcurse.com\",\n  \"password\": \"SenhaForte1!\",\n  \"confirmPassword\": \"SenhaForte1!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -73,6 +73,44 @@
               }
             }
           ]
+        },
+        {
+          "name": "Criar usuário (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tech-curse/Auth/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tech-curse",
+                "Auth",
+                "users"
+              ]
+            },
+            "description": "Admin. Cria usuario com a role informada (Admin, Instructor ou Student).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"InstrutorExemplo\",\n  \"email\": \"instrutor@techcurse.com\",\n  \"role\": \"Instructor\",\n  \"password\": \"SenhaForte1!\",\n  \"confirmPassword\": \"SenhaForte1!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
         {
           "name": "Login",

@@ -177,6 +177,22 @@ dotnet user-secrets set "ConnectionStrings:APITechCurse" "Host=localhost;Port=54
 
 O banco não precisa existir: o `Migrate()` do startup o cria, desde que o usuário tenha permissão `CREATEDB`.
 
+#### Admin de desenvolvimento
+
+Em `Development`, a API cria um Admin no startup quando `Seed:Admin:Email` e `Seed:Admin:Password` estão configurados. A criação é idempotente (se o e-mail já existe, nada muda) e nunca acontece em outros ambientes. O registro público (`POST /tech-curse/Auth/register`) nunca cria Admin nem Instructor — use `POST /tech-curse/Auth/users` autenticado como Admin.
+
+Rodando a API no host:
+
+```bash
+dotnet user-secrets set "Seed:Admin:Email" "admin@techcurse.dev" --project src/Api
+```
+
+```bash
+dotnet user-secrets set "Seed:Admin:Password" "<senha forte>" --project src/Api
+```
+
+Pelo compose, preencha `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD` no `.env`.
+
 A API estará acessível em:
 - **Swagger UI:** [http://localhost:5130/swagger](http://localhost:5130/swagger) ou [https://localhost:7106/swagger](https://localhost:7106/swagger)
 - **Liveness:** [http://localhost:5130/health/live](http://localhost:5130/health/live) — responde 200 se o processo está de pé, sem consultar dependência alguma
@@ -228,7 +244,8 @@ sequenceDiagram
 
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :---: | :--- | :---: | :--- |
-| **Auth** | `POST` | `/tech-curse/Auth/register` | Público | Registra novo usuário no Identity |
+| **Auth** | `POST` | `/tech-curse/Auth/register` | Público | Registra um novo aluno (a role é sempre Student) |
+| **Auth** | `POST` | `/tech-curse/Auth/users` | Admin | Cria usuário com a role informada (`Admin`, `Instructor` ou `Student`) |
 | **Auth** | `POST` | `/tech-curse/Auth/login` | Público | Autentica e retorna access token + refresh token |
 | **Auth** | `POST` | `/tech-curse/Auth/refresh` | Público | Rotaciona o par de tokens |
 | **Course** | `GET` | `/tech-curse/Course` | Autenticado | Lista catálogo com paginação e filtro por categoria |
