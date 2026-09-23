@@ -59,7 +59,7 @@ public class AuthService : IAuthService
             });
         }
 
-        if (role == UserRole.Student && await _studentRepository.EmailExistsAsync(email))
+        if (role == UserRole.Student && await _userManager.FindByEmailAsync(email) is null && await _studentRepository.EmailExistsAsync(email))
         {
             throw new ConflictException("Já existe um perfil de estudante com este e-mail.");
         }

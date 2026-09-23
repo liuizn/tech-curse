@@ -416,6 +416,24 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     [Fact]
     [Trait("Category", "Integration")]
+    public async Task Register_WhenEmailDeAlunoJaCadastrado_ShouldReturn422_ComDuplicateEmail()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var anonimo = _factory.CreateAnonymousClient();
+        var email = $"aluno_repetido_{Guid.NewGuid():N}@techcurse.com";
+        var primeiro = new RegisterInputDto($"primeiro{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123");
+        var segundo = new RegisterInputDto($"segundo{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123");
+        (await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", primeiro)).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var resposta = await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", segundo);
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var documento = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        documento.RootElement.GetProperty("errors").TryGetProperty("DuplicateEmail", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
     public async Task Register_WhenCriacaoDoPerfilFalha_ShouldApagarOUsuario()
     {
         await _factory.EnsureRolesCreatedAsync();
