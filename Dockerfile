@@ -33,7 +33,6 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     -c Release \
     --use-current-runtime \
     --no-self-contained \
-    --no-restore \
     -o /app/publish \
     -p:UseAppHost=false \
     -p:PublishReadyToRun=true
