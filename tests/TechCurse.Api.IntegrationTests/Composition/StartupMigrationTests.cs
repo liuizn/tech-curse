@@ -18,7 +18,6 @@ public class StartupMigrationTests
                 "ConnectionStrings:APITechCurse",
                 "Host=127.0.0.1;Port=1;Database=APITechCurse;Username=postgres;Password=SenhaIrrelevante1!;Timeout=1");
             builder.UseSetting("ConnectionStrings:RedisCache", "localhost:6379,abortConnect=false");
-            builder.UseSetting("ConnectionStrings:SeqUrl", "http://localhost:5341");
             builder.UseSetting("Jwt:Issuer", CustomWebApplicationFactory.JwtIssuer);
             builder.UseSetting("Jwt:Audience", CustomWebApplicationFactory.JwtAudience);
             builder.UseSetting("Jwt:SigningKey", CustomWebApplicationFactory.JwtSigningKey);

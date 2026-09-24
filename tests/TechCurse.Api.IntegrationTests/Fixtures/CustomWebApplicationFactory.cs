@@ -33,7 +33,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.UseSetting("UseInMemoryDatabase", "true");
         builder.UseSetting("ConnectionStrings:RedisCache", "localhost:6379,abortConnect=false");
-        builder.UseSetting("ConnectionStrings:SeqUrl", "http://localhost:5341");
         builder.UseSetting("Jwt:Issuer", JwtIssuer);
         builder.UseSetting("Jwt:Audience", JwtAudience);
         builder.UseSetting("Jwt:SigningKey", JwtSigningKey);
