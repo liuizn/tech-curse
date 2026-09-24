@@ -5,10 +5,17 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using TechCurse.Api.IntegrationTests.Fixtures;
 using TechCurse.Application.DTOs;
+using TechCurse.Application.Interfaces;
+using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
+using TechCurse.Infrastructure.Data;
+using TechCurse.Infrastructure.Repositories;
 using Xunit;
 
 namespace TechCurse.Api.IntegrationTests.Endpoints;
@@ -336,5 +343,185 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         var usuario = await userManager.FindByEmailAsync(email);
         usuario.Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Register_WhenValido_ShouldCriarPerfilDeEstudante()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var anonimo = _factory.CreateAnonymousClient();
+        var nome = $"perfil{Guid.NewGuid():N}";
+        var email = $"perfil_{Guid.NewGuid():N}@techcurse.com";
+
+        var registro = await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", new RegisterInputDto(nome, email, "SenhaForte@123", "SenhaForte@123"));
+        registro.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var usuario = await userManager.FindByEmailAsync(email);
+        usuario.Should().NotBeNull();
+
+        var aluno = _factory.CreateStudentClient(email, usuario!.Id);
+        var resposta = await aluno.GetAsync("/tech-curse/Student/me");
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        var perfil = await resposta.Content.ReadFromJsonAsync<StudentOutputDto>();
+        perfil!.Nome.Should().Be(nome);
+        perfil.Email.Should().Be(email);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task CreateUser_WhenRoleStudent_ShouldCriarPerfil_EInstructorNao()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var admin = _factory.CreateAdminClient();
+        var emailAluno = $"aluno_admin_{Guid.NewGuid():N}@techcurse.com";
+        var emailInstrutor = $"instrutor_admin_{Guid.NewGuid():N}@techcurse.com";
+
+        (await admin.PostAsJsonAsync("/tech-curse/Auth/users", new CreateUserInputDto($"aluno{Guid.NewGuid():N}", emailAluno, UserRole.Student, "SenhaForte@123", "SenhaForte@123")))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+        (await admin.PostAsJsonAsync("/tech-curse/Auth/users", new CreateUserInputDto($"instrutor{Guid.NewGuid():N}", emailInstrutor, UserRole.Instructor, "SenhaForte@123", "SenhaForte@123")))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<TechCurseContext>();
+        (await context.Students.AnyAsync(s => s.Email == emailAluno)).Should().BeTrue();
+        (await context.Students.AnyAsync(s => s.Email == emailInstrutor)).Should().BeFalse();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Register_WhenJaExistePerfilComOEmail_ShouldReturn409_ENaoCriarUsuario()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var email = $"perfil_antigo_{Guid.NewGuid():N}@techcurse.com";
+        await _factory.ExecuteDbContextAsync(async context =>
+        {
+            var donoAntigo = new IdentityUser { Id = $"antigo-{Guid.NewGuid():N}", UserName = $"antigo{Guid.NewGuid():N}", Email = $"outro_{Guid.NewGuid():N}@techcurse.com" };
+            context.Users.Add(donoAntigo);
+            context.Students.Add(new Student { Nome = "Perfil Antigo", Email = email, IdentityUserId = donoAntigo.Id, DataCadastro = DateTime.UtcNow, IsDeleted = false });
+            await context.SaveChangesAsync();
+        });
+        var anonimo = _factory.CreateAnonymousClient();
+
+        var resposta = await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", new RegisterInputDto($"novo{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123"));
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        (await userManager.FindByEmailAsync(email)).Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Register_WhenEmailDeAlunoJaCadastrado_ShouldReturn422_ComDuplicateEmail()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var anonimo = _factory.CreateAnonymousClient();
+        var email = $"aluno_repetido_{Guid.NewGuid():N}@techcurse.com";
+        var primeiro = new RegisterInputDto($"primeiro{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123");
+        var segundo = new RegisterInputDto($"segundo{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123");
+        (await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", primeiro)).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var resposta = await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", segundo);
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var documento = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        documento.RootElement.GetProperty("errors").TryGetProperty("DuplicateEmail", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Register_WhenCriacaoDoPerfilFalha_ShouldApagarOUsuario()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var repositorioQueFalha = new Mock<IStudentRepository>();
+        repositorioQueFalha.Setup(r => r.EmailExistsAsync(It.IsAny<string>())).ReturnsAsync(false);
+        repositorioQueFalha.Setup(r => r.AddAsync(It.IsAny<Student>())).ThrowsAsync(new InvalidOperationException("falha simulada ao gravar o perfil"));
+        using var fabrica = _factory.WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services => services.AddScoped(_ => repositorioQueFalha.Object)));
+        var anonimo = fabrica.CreateClient();
+        var email = $"compensacao_{Guid.NewGuid():N}@techcurse.com";
+
+        var resposta = await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", new RegisterInputDto($"compensacao{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123"));
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        using var scope = fabrica.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        (await userManager.FindByEmailAsync(email)).Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Register_WhenGravacaoDoPerfilFalhaNoBanco_ShouldApagarOUsuario()
+    {
+        await _factory.EnsureRolesCreatedAsync();
+        var studentIdEmConflito = Random.Shared.Next(1_000_000, 2_000_000);
+        await _factory.ExecuteDbContextAsync(async context =>
+        {
+            var donoDoConflito = new IdentityUser { Id = $"conflito-{Guid.NewGuid():N}", UserName = $"conflito{Guid.NewGuid():N}", Email = $"conflito_{Guid.NewGuid():N}@techcurse.com" };
+            context.Users.Add(donoDoConflito);
+            context.Students.Add(new Student { StudentId = studentIdEmConflito, Nome = "Conflito", Email = $"conflito_perfil_{Guid.NewGuid():N}@techcurse.com", IdentityUserId = donoDoConflito.Id, DataCadastro = DateTime.UtcNow, IsDeleted = false });
+            await context.SaveChangesAsync();
+        });
+        using var fabrica = _factory.WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services =>
+                services.AddScoped<IStudentRepository>(sp => new StudentRepositoryComConflitoDeChave(sp.GetRequiredService<TechCurseContext>(), studentIdEmConflito))));
+        var anonimo = fabrica.CreateClient();
+        var email = $"conflito_registro_{Guid.NewGuid():N}@techcurse.com";
+
+        var resposta = await anonimo.PostAsJsonAsync("/tech-curse/Auth/register", new RegisterInputDto($"conflito{Guid.NewGuid():N}", email, "SenhaForte@123", "SenhaForte@123"));
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        using var scope = fabrica.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        (await userManager.FindByEmailAsync(email)).Should().BeNull();
+    }
+
+    private sealed class StudentRepositoryComConflitoDeChave : IStudentRepository
+    {
+        private readonly StudentRepository _repositorioReal;
+        private readonly int _studentIdEmConflito;
+
+        public StudentRepositoryComConflitoDeChave(TechCurseContext context, int studentIdEmConflito)
+        {
+            _repositorioReal = new StudentRepository(context);
+            _studentIdEmConflito = studentIdEmConflito;
+        }
+
+        public Task AddAsync(Student student)
+        {
+            student.StudentId = _studentIdEmConflito;
+            return _repositorioReal.AddAsync(student);
+        }
+
+        public Task<(IEnumerable<Student> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto searchParams)
+            => _repositorioReal.GetPagedAsync(searchParams);
+
+        public Task<IEnumerable<Student>> GetAllAsync()
+            => _repositorioReal.GetAllAsync();
+
+        public Task<Student?> GetByIdAsync(int id)
+            => _repositorioReal.GetByIdAsync(id);
+
+        public Task<Student?> GetByEmailAsync(string email)
+            => _repositorioReal.GetByEmailAsync(email);
+
+        public Task<IEnumerable<CourseStudentOutputDto>> GetCoursesAsync(Student student)
+            => _repositorioReal.GetCoursesAsync(student);
+
+        public Task UpdateAsync(Student student)
+            => _repositorioReal.UpdateAsync(student);
+
+        public Task DeleteAsync(Student student)
+            => _repositorioReal.DeleteAsync(student);
+
+        public Task<bool> EmailExistsAsync(string email)
+            => _repositorioReal.EmailExistsAsync(email);
+
+        public Task<bool> StudentIsActiveAsync(Student student)
+            => _repositorioReal.StudentIsActiveAsync(student);
     }
 }

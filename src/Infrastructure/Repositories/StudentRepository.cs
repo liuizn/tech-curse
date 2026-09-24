@@ -47,7 +47,8 @@ public class StudentRepository : IStudentRepository
                 e.Course.Titulo,
                 e.Course.Descricao,
                 e.Course.Categoria,
-                e.Status
+                e.Status,
+                e.EnrollmentId
             ))
             .ToListAsync();
 
@@ -56,8 +57,16 @@ public class StudentRepository : IStudentRepository
 
     public async Task AddAsync(Student student)
     {
-        await _context.Students.AddAsync(student);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.Students.AddAsync(student);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            _context.Entry(student).State = EntityState.Detached;
+            throw;
+        }
     }
 
     public async Task UpdateAsync(Student student)

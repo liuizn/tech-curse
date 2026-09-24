@@ -16,7 +16,9 @@ public class EnrollmentRepository : IEnrollmentRepository
     }
 
     public async Task<Enrollment?> GetByIdAsync(int id)
-        => await _context.Enrollments.FindAsync(id);
+        => await _context.Enrollments
+            .Include(e => e.Course)
+            .FirstOrDefaultAsync(e => e.EnrollmentId == id);
 
     public async Task<Enrollment?> GetByStudentCourseAsync(int studentId, int courseId)
         => await _context.Enrollments

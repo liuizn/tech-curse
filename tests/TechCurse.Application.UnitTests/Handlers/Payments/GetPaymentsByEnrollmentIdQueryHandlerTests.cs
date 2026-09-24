@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Moq;
 using TechCurse.Application.DTOs;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Features.Payments.Queries.GetPaymentsByEnrollmentId;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
@@ -95,10 +96,10 @@ public class GetPaymentsByEnrollmentIdQueryHandlerTests
 
         var cachedDtos = new List<PaymentOutputDto>
         {
-            new(1, 1, 2, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, null, null)
+            new(1, 1, 2, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, null, null, DadosDePagamento.CursoId, DadosDePagamento.CursoTitulo)
         };
 
-        _cacheServiceMock.Setup(c => c.GetAsync<IEnumerable<PaymentOutputDto>>("payments:enrollment:1"))
+        _cacheServiceMock.Setup(c => c.GetAsync<IEnumerable<PaymentOutputDto>>($"{ChavesDeCachePagamento.PorMatricula}1"))
             .ReturnsAsync(cachedDtos);
 
         var query = new GetPaymentsByEnrollmentIdQuery(1);

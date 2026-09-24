@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Moq;
 using TechCurse.Application.DTOs;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Features.Payments.Queries.GetPaymentById;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
@@ -81,8 +82,8 @@ public class GetPaymentByIdQueryHandlerTests
         _currentUserServiceMock.Setup(u => u.GetUserId()).Returns("user-123");
         _currentUserServiceMock.Setup(u => u.IsInRole(UserRole.Admin)).Returns(false);
 
-        var cachedDto = new PaymentOutputDto(1, 10, 20, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, DateTime.UtcNow, "TX_1");
-        _cacheServiceMock.Setup(c => c.GetAsync<PaymentOutputDto>("payments:item:1"))
+        var cachedDto = new PaymentOutputDto(1, 10, 20, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, DateTime.UtcNow, "TX_1", DadosDePagamento.CursoId, DadosDePagamento.CursoTitulo);
+        _cacheServiceMock.Setup(c => c.GetAsync<PaymentOutputDto>($"{ChavesDeCachePagamento.Item}1"))
             .ReturnsAsync(cachedDto);
 
         var query = new GetPaymentByIdQuery(1);
@@ -105,7 +106,8 @@ public class GetPaymentByIdQueryHandlerTests
             Status = PaymentStatus.Pending,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
-            Student = new Student { IdentityUserId = "user-other", Nome = "Student", Email = "s@s.com" }
+            Student = new Student { IdentityUserId = "user-other", Nome = "Student", Email = "s@s.com" },
+            Enrollment = DadosDePagamento.MatriculaComCurso(10, 20)
         };
 
         _paymentRepositoryMock.Setup(r => r.GetByIdAsync(1))
@@ -114,7 +116,7 @@ public class GetPaymentByIdQueryHandlerTests
         _currentUserServiceMock.Setup(u => u.GetUserId()).Returns("admin-id");
         _currentUserServiceMock.Setup(u => u.IsInRole(UserRole.Admin)).Returns(true);
 
-        _cacheServiceMock.Setup(c => c.GetAsync<PaymentOutputDto>("payments:item:1"))
+        _cacheServiceMock.Setup(c => c.GetAsync<PaymentOutputDto>($"{ChavesDeCachePagamento.Item}1"))
             .ReturnsAsync((PaymentOutputDto?)null);
 
         var query = new GetPaymentByIdQuery(1);
@@ -124,7 +126,9 @@ public class GetPaymentByIdQueryHandlerTests
         result.Should().NotBeNull();
         result.PaymentId.Should().Be(1);
         result.Amount.Should().Be(100m);
+        result.CourseId.Should().Be(DadosDePagamento.CursoId);
+        result.CourseTitulo.Should().Be(DadosDePagamento.CursoTitulo);
 
-        _cacheServiceMock.Verify(c => c.SetAsync("payments:item:1", It.IsAny<PaymentOutputDto>(), It.IsAny<TimeSpan>()), Times.Once);
+        _cacheServiceMock.Verify(c => c.SetAsync($"{ChavesDeCachePagamento.Item}1", It.IsAny<PaymentOutputDto>(), It.IsAny<TimeSpan>()), Times.Once);
     }
 }

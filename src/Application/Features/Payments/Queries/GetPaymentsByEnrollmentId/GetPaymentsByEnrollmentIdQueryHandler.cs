@@ -11,7 +11,6 @@ public class GetPaymentsByEnrollmentIdQueryHandler : IRequestHandler<GetPayments
     private readonly IPaymentRepository _paymentRepository;
     private readonly ICacheService _cacheService;
     private readonly ICurrentUserService _currentUserService;
-    private const string PAYMENT_BY_ENROLLMENT_PREFIX = "payments:enrollment:";
 
     public GetPaymentsByEnrollmentIdQueryHandler(IPaymentRepository paymentRepository, ICacheService cacheService, ICurrentUserService currentUserService)
     {
@@ -23,7 +22,7 @@ public class GetPaymentsByEnrollmentIdQueryHandler : IRequestHandler<GetPayments
     public async Task<IEnumerable<PaymentOutputDto>> Handle(GetPaymentsByEnrollmentIdQuery request, CancellationToken cancellationToken)
     {
         var enrollmentId = request.EnrollmentId;
-        var cacheKey = $"{PAYMENT_BY_ENROLLMENT_PREFIX}{enrollmentId}";
+        var cacheKey = $"{ChavesDeCachePagamento.PorMatricula}{enrollmentId}";
 
         var payments = await _paymentRepository.GetByEnrollmentIdAsync(enrollmentId);
 
@@ -35,10 +34,7 @@ public class GetPaymentsByEnrollmentIdQueryHandler : IRequestHandler<GetPayments
         var cached = await _cacheService.GetAsync<IEnumerable<PaymentOutputDto>>(cacheKey);
         if (cached != null) return cached;
 
-        var dtos = payments.Select(p => new PaymentOutputDto(
-            p.PaymentId, p.EnrollmentId, p.StudentId, p.Amount, p.Status,
-            p.IsActive, p.CreatedAt, p.PaidAt, p.ExternalTransactionId
-        )).ToList();
+        var dtos = payments.Select(p => p.ParaDto()).ToList();
 
         await _cacheService.SetAsync(cacheKey, dtos, TimeSpan.FromMinutes(15));
 

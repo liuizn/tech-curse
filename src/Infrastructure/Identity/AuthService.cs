@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Interfaces;
+using TechCurse.Domain.Entities;
 using TechCurse.Domain.Enums;
 using TechCurse.Domain.Exceptions;
 
@@ -20,19 +21,19 @@ public class AuthService : IAuthService
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
     private readonly ITokenService _tokenService;
+    private readonly IStudentRepository _studentRepository;
 
-    public AuthService(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ITokenService tokenService)
+    public AuthService(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ITokenService tokenService, IStudentRepository studentRepository)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _tokenService = tokenService;
+        _studentRepository = studentRepository;
     }
 
-    public async Task<bool> RegisterAsync(RegisterInputDto input)
+    public async Task RegisterAsync(RegisterInputDto input)
     {
         await CriarUsuarioAsync(input.Name, input.Email, input.Password, input.ConfirmPassword, UserRole.Student);
-
-        return true;
     }
 
     public async Task CreateUserAsync(CreateUserInputDto input)
@@ -58,6 +59,11 @@ public class AuthService : IAuthService
             });
         }
 
+        if (role == UserRole.Student && await _userManager.FindByEmailAsync(email) is null && await _studentRepository.EmailExistsAsync(email))
+        {
+            throw new ConflictException("Já existe um perfil de estudante com este e-mail.");
+        }
+
         var user = new IdentityUser { UserName = nome, Email = email };
 
         var result = await _userManager.CreateAsync(user, senha);
@@ -81,9 +87,57 @@ public class AuthService : IAuthService
             throw new ValidationException(errorList);
         }
 
-        await _userManager.AddToRoleAsync(user, role.ToString());
+        try
+        {
+            var resultadoRole = await _userManager.AddToRoleAsync(user, role.ToString());
+
+            if (!resultadoRole.Succeeded)
+            {
+                var erros = string.Join("; ", resultadoRole.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                throw new InvalidOperationException($"Não foi possível atribuir a role {role} ao usuário: {erros}");
+            }
+
+            if (role == UserRole.Student)
+            {
+                await _studentRepository.AddAsync(new Student
+                {
+                    Nome = nome,
+                    Email = email,
+                    IdentityUserId = user.Id,
+                    IdentityUser = user,
+                    DataCadastro = DateTime.UtcNow,
+                    IsDeleted = false,
+                    Enrollments = new List<Enrollment>()
+                });
+            }
+        }
+        catch (Exception erroOriginal)
+        {
+            await DesfazerCriacaoDoUsuarioAsync(user, erroOriginal);
+            throw;
+        }
 
         return user;
+    }
+
+    private async Task DesfazerCriacaoDoUsuarioAsync(IdentityUser user, Exception erroOriginal)
+    {
+        IdentityResult resultado;
+
+        try
+        {
+            resultado = await _userManager.DeleteAsync(user);
+        }
+        catch (Exception erroNaExclusao)
+        {
+            throw new AggregateException("Falha ao criar o usuário e ao desfazer a criação.", erroOriginal, erroNaExclusao);
+        }
+
+        if (!resultado.Succeeded)
+        {
+            var erros = string.Join("; ", resultado.Errors.Select(e => $"{e.Code}: {e.Description}"));
+            throw new AggregateException($"Falha ao criar o usuário e ao desfazer a criação: {erros}", erroOriginal);
+        }
     }
 
     public async Task<AuthOutputDto?> LoginAsync(LoginInputDto input)

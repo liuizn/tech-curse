@@ -66,7 +66,7 @@ public class GetStudentEnrollmentsQueryHandlerTests
 
         var coursesList = new List<CourseStudentOutputDto>
         {
-            new(1, "Curso C#", "Desc", "Tech", true)
+            new(1, "Curso C#", "Desc", "Tech", true, 1)
         };
 
         _studentRepositoryMock.Setup(r => r.GetCoursesAsync(student))

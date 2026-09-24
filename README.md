@@ -233,7 +233,7 @@ sequenceDiagram
 ```
 
 1. Acesse o **Swagger UI** (`/swagger`).
-2. Utilize o endpoint `POST /tech-curse/auth/register` para criar um novo usuário ou `POST /tech-curse/auth/login` para autenticar.
+2. Utilize o endpoint `POST /tech-curse/auth/register` para criar um novo usuário ou `POST /tech-curse/auth/login` para autenticar. O aluno registrado já pode usar `/Student/me` e se matricular, sem passo manual de Admin.
 3. Copie o token JWT retornado no campo `token`.
 4. No canto superior direito do Swagger, clique no botão **Authorize 🔒**.
 5. No campo **Value**, digite `Bearer ` seguido do token copiado:
@@ -248,8 +248,8 @@ sequenceDiagram
 
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :---: | :--- | :---: | :--- |
-| **Auth** | `POST` | `/tech-curse/Auth/register` | Público | Registra um novo aluno (a role é sempre Student) |
-| **Auth** | `POST` | `/tech-curse/Auth/users` | Admin | Cria usuário com a role informada (`Admin`, `Instructor` ou `Student`) |
+| **Auth** | `POST` | `/tech-curse/Auth/register` | Público | Registra um novo aluno e já cria o perfil de estudante (a role é sempre Student) |
+| **Auth** | `POST` | `/tech-curse/Auth/users` | Admin | Cria usuário com a role informada (`Admin`, `Instructor` ou `Student`); com role Student, também cria o perfil |
 | **Auth** | `POST` | `/tech-curse/Auth/login` | Público | Autentica e retorna access token + refresh token |
 | **Auth** | `POST` | `/tech-curse/Auth/refresh` | Público | Rotaciona o par de tokens |
 | **Course** | `GET` | `/tech-curse/Course` | Autenticado | Lista catálogo com paginação e filtro por categoria |

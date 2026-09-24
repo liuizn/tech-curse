@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Features.Payments.Commands.CreatePayment;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
@@ -47,7 +48,7 @@ public class CreatePaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenEnrollmentNotActive_ShouldThrowNotAllowedException()
     {
-        var enrollment = new Enrollment { EnrollmentId = 1, StudentId = 2, CourseId = 3 };
+        var enrollment = DadosDePagamento.MatriculaComCurso(1, 2);
         _enrollmentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(enrollment);
         _enrollmentRepositoryMock.Setup(r => r.EnrollmentIsActiveAsync(1))
@@ -65,7 +66,7 @@ public class CreatePaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenActivePaymentAlreadyExists_ShouldThrowConflictException()
     {
-        var enrollment = new Enrollment { EnrollmentId = 1, StudentId = 2, CourseId = 3 };
+        var enrollment = DadosDePagamento.MatriculaComCurso(1, 2);
         _enrollmentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(enrollment);
         _enrollmentRepositoryMock.Setup(r => r.EnrollmentIsActiveAsync(1))
@@ -85,7 +86,7 @@ public class CreatePaymentCommandHandlerTests
     [Trait("Category", "Unit")]
     public async Task Handle_WhenValid_ShouldCreatePaymentAndClearCaches()
     {
-        var enrollment = new Enrollment { EnrollmentId = 1, StudentId = 2, CourseId = 3 };
+        var enrollment = DadosDePagamento.MatriculaComCurso(1, 2);
         _enrollmentRepositoryMock.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(enrollment);
         _enrollmentRepositoryMock.Setup(r => r.EnrollmentIsActiveAsync(1))
@@ -107,9 +108,11 @@ public class CreatePaymentCommandHandlerTests
         result.StudentId.Should().Be(2);
         result.Amount.Should().Be(150m);
         result.Status.Should().Be(PaymentStatus.Pending);
+        result.CourseId.Should().Be(DadosDePagamento.CursoId);
+        result.CourseTitulo.Should().Be(DadosDePagamento.CursoTitulo);
 
         _paymentRepositoryMock.Verify(r => r.AddAsync(It.Is<Payment>(p => p.Amount == 150m && p.Status == PaymentStatus.Pending)), Times.Once);
-        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync("payments:list:"), Times.Once);
-        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync("payments:item:"), Times.Once);
+        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync(ChavesDeCachePagamento.Lista), Times.Once);
+        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync(ChavesDeCachePagamento.Item), Times.Once);
     }
 }

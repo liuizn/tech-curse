@@ -12,7 +12,6 @@ public class GetPaymentsByStudentIdQueryHandler : IRequestHandler<GetPaymentsByS
     private readonly IStudentRepository _studentRepository;
     private readonly ICacheService _cacheService;
     private readonly ICurrentUserService _currentUserService;
-    private const string PAYMENT_BY_STUDENT_PREFIX = "payments:student:";
 
     public GetPaymentsByStudentIdQueryHandler(IPaymentRepository paymentRepository, IStudentRepository studentRepository, ICacheService cacheService, ICurrentUserService currentUserService)
     {
@@ -26,7 +25,7 @@ public class GetPaymentsByStudentIdQueryHandler : IRequestHandler<GetPaymentsByS
     {
         var studentId = request.StudentId;
         var searchParams = request.SearchParams;
-        var cacheKey = $"{PAYMENT_BY_STUDENT_PREFIX}id:{studentId}:page:{searchParams.PageNumber}:size:{searchParams.PageSize}:sort:{searchParams.SortBy}_{searchParams.SortDirection}";
+        var cacheKey = $"{ChavesDeCachePagamento.PorEstudante}id:{studentId}:page:{searchParams.PageNumber}:size:{searchParams.PageSize}:sort:{searchParams.SortBy}_{searchParams.SortDirection}";
 
         var student = await _studentRepository.GetByIdAsync(studentId);
         if (student == null) throw new NotFoundException("Estudante não encontrado.");
@@ -38,10 +37,7 @@ public class GetPaymentsByStudentIdQueryHandler : IRequestHandler<GetPaymentsByS
 
         var (items, totalCount) = await _paymentRepository.GetByStudentIdAsync(studentId, searchParams);
 
-        var dtos = items.Select(p => new PaymentOutputDto(
-            p.PaymentId, p.EnrollmentId, p.StudentId, p.Amount, p.Status,
-            p.IsActive, p.CreatedAt, p.PaidAt, p.ExternalTransactionId
-        ));
+        var dtos = items.Select(p => p.ParaDto());
 
         var result = new PagedResultDto<PaymentOutputDto>(dtos, totalCount, searchParams.PageNumber, searchParams.PageSize);
         await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));

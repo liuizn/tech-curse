@@ -72,7 +72,7 @@ public class GetPaymentsByStudentIdQueryHandlerTests
         _currentUserServiceMock.Setup(u => u.IsInRole(UserRole.Admin)).Returns(false);
 
         var cachedResult = new PagedResultDto<PaymentOutputDto>(
-            new List<PaymentOutputDto> { new(1, 1, 1, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, null, null) },
+            new List<PaymentOutputDto> { new(1, 1, 1, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, null, null, DadosDePagamento.CursoId, DadosDePagamento.CursoTitulo) },
             1, 1, 10
         );
 

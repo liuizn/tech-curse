@@ -26,6 +26,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 - `POST /tech-curse/Auth/users` (Admin): cria usuário com role `Admin`, `Instructor` ou `Student`.
 - Admin semeado em `Development` a partir de `Seed:Admin:Email`/`Seed:Admin:Password` (user-secrets ou `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` no compose).
+- O cadastro de aluno (`POST /tech-curse/Auth/register`, e `POST /tech-curse/Auth/users` com role `Student`) cria o perfil de estudante automaticamente; se a gravação falhar, o usuário é removido. E-mail com perfil de estudante sem usuário responde 409; e-mail de usuário já existente continua 422 `DuplicateEmail`.
+- `PaymentOutputDto` ganha `courseId` e `courseTitulo`; `CourseStudentOutputDto` (matrículas do estudante) ganha `enrollmentId`.
 
 ### 🔄 Alterado
 
@@ -33,6 +35,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - O filtro do índice único de `Payment.EnrollmentId` passou de `[IsActive] = 1` para `"IsActive" = true`; o comportamento (um pagamento ativo por matrícula, reativação após desativar) foi verificado contra Postgres real.
 - O healthcheck do serviço `db` usa `pg_isready -h localhost`, forçando TCP para não reportar pronto durante o `initdb`.
 - Documentação (README, collection do Postman e CLAUDE.md) atualizada; o CLAUDE.md registra as armadilhas novas: `DateTime` precisa ser UTC, `HasFilter` é SQL cru no dialeto do provider, e troca de provider exige regerar migrations.
+- Montagem do `PaymentOutputDto` centralizada em `PaymentMapping`; prefixos de cache de pagamento centralizados em `ChavesDeCachePagamento` e versionados (`payments:v2:`), para não servir respostas no formato antigo.
+- Usuários `Student` criados antes desta versão continuam sem perfil; o Admin cria pelo `POST /tech-curse/Student`.
+- `PaymentRepository.UpdateAsync` marca só o pagamento como modificado, não suas navegações — processar/estornar não reescreve mais linhas de matrícula, curso ou aluno.
 
 ### 📌 Mantido de propósito
 

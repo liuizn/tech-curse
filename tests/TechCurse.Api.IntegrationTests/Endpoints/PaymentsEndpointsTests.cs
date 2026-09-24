@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using TechCurse.Api.IntegrationTests.Fixtures;
@@ -271,5 +273,50 @@ public class PaymentsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var result = await response.Content.ReadFromJsonAsync<RefundPaymentOutputDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Consultas_ShouldIncluirCursoDoPagamento()
+    {
+        var userId = $"curso-pag-{Guid.NewGuid():N}";
+        var email = $"curso_pag_{Guid.NewGuid():N}@techcurse.com";
+        var titulo = $"Curso do Pagamento {Guid.NewGuid():N}";
+        int paymentId = 0, studentId = 0, enrollmentId = 0, courseId = 0;
+        await _factory.ExecuteDbContextAsync(async context =>
+        {
+            var user = new IdentityUser { Id = userId, Email = email, UserName = $"cursopag{Guid.NewGuid():N}", NormalizedEmail = email.ToUpperInvariant() };
+            context.Users.Add(user);
+            var student = new Student { Nome = "Aluno Curso Pagamento", Email = email, IdentityUserId = userId, IsDeleted = false, DataCadastro = DateTime.UtcNow };
+            context.Students.Add(student);
+            var course = new Course { Titulo = titulo, Descricao = "Desc", Categoria = "Tech", CargaHoraria = 20, DataCriacao = DateTime.UtcNow };
+            context.Courses.Add(course);
+            await context.SaveChangesAsync();
+            var enrollment = new Enrollment { StudentId = student.StudentId, CourseId = course.CourseId, DataMatricula = DateTime.UtcNow, Status = true };
+            context.Enrollments.Add(enrollment);
+            await context.SaveChangesAsync();
+            var payment = new Payment { EnrollmentId = enrollment.EnrollmentId, StudentId = student.StudentId, Amount = 99.90m, Status = PaymentStatus.Pending, IsActive = true, CreatedAt = DateTime.UtcNow };
+            context.Payments.Add(payment);
+            await context.SaveChangesAsync();
+            paymentId = payment.PaymentId;
+            studentId = student.StudentId;
+            enrollmentId = enrollment.EnrollmentId;
+            courseId = course.CourseId;
+        });
+        var admin = _factory.CreateAdminClient();
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
+        var porId = await admin.GetFromJsonAsync<PaymentOutputDto>($"/tech-curse/Payment/{paymentId}", jsonOptions);
+        var porEstudante = await admin.GetFromJsonAsync<PagedResultDto<PaymentOutputDto>>($"/tech-curse/Payment/student/{studentId}", jsonOptions);
+        var porMatricula = await admin.GetFromJsonAsync<List<PaymentOutputDto>>($"/tech-curse/Payment/enrollment/{enrollmentId}", jsonOptions);
+
+        porId!.CourseId.Should().Be(courseId);
+        porId.CourseTitulo.Should().Be(titulo);
+        porEstudante!.Items.Should().ContainSingle(p => p.PaymentId == paymentId && p.CourseId == courseId && p.CourseTitulo == titulo);
+        porMatricula.Should().ContainSingle(p => p.PaymentId == paymentId && p.CourseId == courseId && p.CourseTitulo == titulo);
     }
 }

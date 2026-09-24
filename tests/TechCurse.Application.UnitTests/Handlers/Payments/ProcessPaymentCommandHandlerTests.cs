@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TechCurse.Application.DTOs;
 using TechCurse.Application.Factory;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Features.Payments.Commands.ProcessPayment;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Entities;
@@ -157,6 +158,6 @@ public class ProcessPaymentCommandHandlerTests
         payment.ReceiptUrl.Should().Be("https://receipt.url");
 
         _paymentRepositoryMock.Verify(r => r.UpdateAsync(payment), Times.Once);
-        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync("payments:list:"), Times.Once);
+        _cacheServiceMock.Verify(c => c.RemoveByPrefixAsync(ChavesDeCachePagamento.Lista), Times.Once);
     }
 }

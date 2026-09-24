@@ -1,5 +1,6 @@
 using MediatR;
 using TechCurse.Application.DTOs;
+using TechCurse.Application.Features.Payments;
 using TechCurse.Application.Interfaces;
 using TechCurse.Domain.Enums;
 using TechCurse.Domain.Exceptions;
@@ -11,7 +12,6 @@ public class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQuery, P
     private readonly IPaymentRepository _paymentRepository;
     private readonly ICacheService _cacheService;
     private readonly ICurrentUserService _currentUserService;
-    private const string PAYMENT_ITEM_PREFIX = "payments:item:";
 
     public GetPaymentByIdQueryHandler(IPaymentRepository paymentRepository, ICacheService cacheService, ICurrentUserService currentUserService)
     {
@@ -22,7 +22,7 @@ public class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQuery, P
 
     public async Task<PaymentOutputDto> Handle(GetPaymentByIdQuery request, CancellationToken cancellationToken)
     {
-        var cacheKey = $"{PAYMENT_ITEM_PREFIX}{request.Id}";
+        var cacheKey = $"{ChavesDeCachePagamento.Item}{request.Id}";
 
         var payment = await _paymentRepository.GetByIdAsync(request.Id);
         if (payment == null) throw new NotFoundException("Pagamento não encontrado.");
@@ -32,10 +32,7 @@ public class GetPaymentByIdQueryHandler : IRequestHandler<GetPaymentByIdQuery, P
         var cached = await _cacheService.GetAsync<PaymentOutputDto>(cacheKey);
         if (cached != null) return cached;
 
-        var dto = new PaymentOutputDto(
-            payment.PaymentId, payment.EnrollmentId, payment.StudentId, payment.Amount, payment.Status,
-            payment.IsActive, payment.CreatedAt, payment.PaidAt, payment.ExternalTransactionId
-        );
+        var dto = payment.ParaDto();
 
         await _cacheService.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(15));
         return dto;

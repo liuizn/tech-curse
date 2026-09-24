@@ -28,7 +28,7 @@ public class GetPaymentsQueryHandlerTests
         var query = new GetPaymentsQuery(searchParams);
 
         var cachedResult = new PagedResultDto<PaymentOutputDto>(
-            new List<PaymentOutputDto> { new(1, 10, 20, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, null, null) },
+            new List<PaymentOutputDto> { new(1, 10, 20, 100m, PaymentStatus.Paid, true, DateTime.UtcNow, null, null, DadosDePagamento.CursoId, DadosDePagamento.CursoTitulo) },
             1, 1, 10
         );
 
@@ -53,7 +53,7 @@ public class GetPaymentsQueryHandlerTests
 
         var payments = new List<Payment>
         {
-            new() { PaymentId = 1, EnrollmentId = 10, StudentId = 20, Amount = 100m, Status = PaymentStatus.Paid, IsActive = true, CreatedAt = DateTime.UtcNow }
+            new() { PaymentId = 1, EnrollmentId = 10, StudentId = 20, Amount = 100m, Status = PaymentStatus.Paid, IsActive = true, CreatedAt = DateTime.UtcNow, Enrollment = DadosDePagamento.MatriculaComCurso(10, 20) }
         };
 
         _paymentRepositoryMock.Setup(r => r.GetPagedAsync(searchParams))
