@@ -26,11 +26,11 @@ public class EnrollmentRepository : IEnrollmentRepository
 
     public async Task<bool> EnrollmentIsActiveAsync(int id)
         => await _context.Enrollments
-            .Where(e => e.EnrollmentId == id && e.Status == false).AnyAsync();
+            .Where(e => e.EnrollmentId == id && e.Status).AnyAsync();
 
     public async Task<bool> EnrollmentIsActiveAsync(int studentId, int courseId)
         => await _context.Enrollments
-            .Where(e => e.StudentId == studentId && e.CourseId == courseId && e.Status == false).AnyAsync();
+            .Where(e => e.StudentId == studentId && e.CourseId == courseId && e.Status).AnyAsync();
 
     public async Task AddAsync(Enrollment enrollment)
     {

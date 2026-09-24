@@ -100,6 +100,63 @@ public class PaymentsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
                 StudentId = student.StudentId,
                 CourseId = course.CourseId,
                 DataMatricula = DateTime.UtcNow,
+                Status = true
+            };
+            context.Enrollments.Add(enrollment);
+            await context.SaveChangesAsync();
+
+            enrollmentId = enrollment.EnrollmentId;
+        });
+
+        var input = new CreatePaymentDto(enrollmentId, 250.00m);
+
+        var response = await client.PostAsJsonAsync("/tech-curse/Payment", input);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Post_WhenEnrollmentInactive_ShouldReturn409Conflict()
+    {
+        var client = _factory.CreateAdminClient();
+        client.DefaultRequestHeaders.Add("Idempotency-Key", Guid.NewGuid().ToString());
+
+        var userId = $"pmt-inativa-{Guid.NewGuid():N}";
+        var email = $"pmt_inativa_{Guid.NewGuid():N}@techcurse.com";
+
+        int enrollmentId = 0;
+        await _factory.ExecuteDbContextAsync(async context =>
+        {
+            var user = new IdentityUser { Id = userId, Email = email, UserName = email, NormalizedEmail = email.ToUpperInvariant(), NormalizedUserName = email.ToUpperInvariant() };
+            context.Users.Add(user);
+
+            var student = new Student
+            {
+                Nome = "Aluno Matrícula Inativa",
+                Email = email,
+                IdentityUserId = userId,
+                IsDeleted = false,
+                DataCadastro = DateTime.UtcNow
+            };
+            context.Students.Add(student);
+
+            var course = new Course
+            {
+                Titulo = $"Curso Matrícula Inativa {Guid.NewGuid():N}",
+                Descricao = "Desc",
+                Categoria = "Tech",
+                CargaHoraria = 20,
+                DataCriacao = DateTime.UtcNow
+            };
+            context.Courses.Add(course);
+            await context.SaveChangesAsync();
+
+            var enrollment = new Enrollment
+            {
+                StudentId = student.StudentId,
+                CourseId = course.CourseId,
+                DataMatricula = DateTime.UtcNow,
                 Status = false
             };
             context.Enrollments.Add(enrollment);
@@ -111,6 +168,64 @@ public class PaymentsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var input = new CreatePaymentDto(enrollmentId, 250.00m);
 
         var response = await client.PostAsJsonAsync("/tech-curse/Payment", input);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Post_WhenEnrollmentCreatedByStudent_ShouldReturn201Created()
+    {
+        var email = $"pmt_fluxo_{Guid.NewGuid():N}@techcurse.com";
+        var userId = $"pmt-fluxo-{Guid.NewGuid():N}";
+
+        int courseId = 0;
+        int studentId = 0;
+        await _factory.ExecuteDbContextAsync(async context =>
+        {
+            var user = new IdentityUser { Id = userId, Email = email, UserName = email, NormalizedEmail = email.ToUpperInvariant(), NormalizedUserName = email.ToUpperInvariant() };
+            context.Users.Add(user);
+
+            var student = new Student
+            {
+                Nome = "Aluno Fluxo",
+                Email = email,
+                IdentityUserId = userId,
+                IsDeleted = false,
+                DataCadastro = DateTime.UtcNow
+            };
+            context.Students.Add(student);
+
+            var course = new Course
+            {
+                Titulo = $"Curso Fluxo {Guid.NewGuid():N}",
+                Descricao = "Desc",
+                Categoria = "Tech",
+                CargaHoraria = 20,
+                DataCriacao = DateTime.UtcNow
+            };
+            context.Courses.Add(course);
+            await context.SaveChangesAsync();
+
+            courseId = course.CourseId;
+            studentId = student.StudentId;
+        });
+
+        var studentClient = _factory.CreateStudentClient(email, userId);
+        var enrollResponse = await studentClient.PostAsJsonAsync("/tech-curse/Enrollment", new EnrollmentInputDto(courseId, studentId));
+        enrollResponse.StatusCode.Should().Be(HttpStatusCode.Accepted);
+
+        int enrollmentId = 0;
+        await _factory.ExecuteDbContextAsync(context =>
+        {
+            enrollmentId = context.Enrollments.Single(e => e.CourseId == courseId).EnrollmentId;
+            return Task.CompletedTask;
+        });
+
+        var adminClient = _factory.CreateAdminClient();
+        adminClient.DefaultRequestHeaders.Add("Idempotency-Key", Guid.NewGuid().ToString());
+
+        var response = await adminClient.PostAsJsonAsync("/tech-curse/Payment", new CreatePaymentDto(enrollmentId, 250.00m));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
