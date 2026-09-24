@@ -35,6 +35,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - `Microsoft.EntityFrameworkCore.SqlServer` → `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3; `AspNetCore.HealthChecks.SqlServer` → `AspNetCore.HealthChecks.NpgSql`.
 - O filtro do índice único de `Payment.EnrollmentId` passou de `[IsActive] = 1` para `"IsActive" = true`; o comportamento (um pagamento ativo por matrícula, reativação após desativar) foi verificado contra Postgres real.
 - O healthcheck do serviço `db` usa `pg_isready -h localhost`, forçando TCP para não reportar pronto durante o `initdb`.
+- A imagem do Redis no compose passou de `redis:alpine` para `redis:8-alpine`, fixando a versão major; o healthcheck autentica por `REDISCLI_AUTH` em vez de `redis-cli -a`, sem o aviso de senha na linha de comando a cada sonda.
+- O `docker-compose.ci.yml` deixou de repetir a porta `8080` da `api`, que já vem do arquivo base.
 - Documentação (README, collection do Postman e CLAUDE.md) atualizada; o CLAUDE.md registra as armadilhas novas: `DateTime` precisa ser UTC, `HasFilter` é SQL cru no dialeto do provider, e troca de provider exige regerar migrations.
 - Montagem do `PaymentOutputDto` centralizada em `PaymentMapping`; prefixos de cache de pagamento centralizados em `ChavesDeCachePagamento` e versionados (`payments:v2:`), para não servir respostas no formato antigo.
 - Usuários `Student` criados antes desta versão continuam sem perfil; o Admin cria pelo `POST /tech-curse/Student`.

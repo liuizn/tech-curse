@@ -16,6 +16,4 @@ services:
   api:
     image: ${API_IMAGE}
     pull_policy: never
-    ports:
-      - "8080:8080"
     restart: "no"
