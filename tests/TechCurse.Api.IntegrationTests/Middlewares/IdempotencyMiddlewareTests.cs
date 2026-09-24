@@ -61,7 +61,7 @@ public class IdempotencyMiddlewareTests : IClassFixture<CustomWebApplicationFact
                 StudentId = student.StudentId,
                 CourseId = course.CourseId,
                 DataMatricula = DateTime.UtcNow,
-                Status = false
+                Status = true
             };
             context.Enrollments.Add(enrollment);
             await context.SaveChangesAsync();
