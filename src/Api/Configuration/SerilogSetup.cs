@@ -9,18 +9,10 @@ public static class SerilogSetup
     {
         services.AddSerilog((serviceProvider, loggerConfiguration) =>
         {
-            var seqConnectionString = configuration.GetConnectionString("SeqUrl");
-
-            if (string.IsNullOrWhiteSpace(seqConnectionString))
-            {
-                throw new InvalidOperationException("A connection string 'SeqUrl' não está configurada.");
-            }
-
             loggerConfiguration
                 .ReadFrom.Configuration(configuration)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(new JsonFormatter())
-                .WriteTo.Seq(seqConnectionString);
+                .WriteTo.Console(new JsonFormatter());
         });
 
         return services;

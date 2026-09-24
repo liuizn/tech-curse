@@ -30,7 +30,7 @@ API REST para uma plataforma de cursos — catálogo, estudantes, matrículas e 
 - **Estudantes** — perfil criado junto com o usuário no registro, consulta do próprio perfil (`/me`) e remoção lógica.
 - **Matrículas** — matrícula em curso com checagem de duplicidade.
 - **Pagamentos** — registro, processamento e estorno, com estratégia por meio de pagamento, especificação de elegibilidade e idempotência obrigatória via Redis.
-- **Plataforma** — RBAC (`Admin`, `Instructor`, `Student`), refresh token com rotação, rate limiting, CORS configurável, logs estruturados com Serilog/Seq, Correlation ID e health checks de liveness e readiness.
+- **Plataforma** — RBAC (`Admin`, `Instructor`, `Student`), refresh token com rotação, rate limiting, CORS configurável, logs estruturados com Serilog, Correlation ID e health checks de liveness e readiness.
 
 ## Arquitetura
 
@@ -70,7 +70,7 @@ Handlers lançam exceções de domínio; o `ExceptionHandlingMiddleware` as conv
 | Persistência | EF Core 10, PostgreSQL 17 (Npgsql) |
 | Cache e idempotência | Redis (StackExchange.Redis) |
 | Identidade | ASP.NET Core Identity, JWT Bearer |
-| Observabilidade | Serilog, Seq, health checks |
+| Observabilidade | Serilog, health checks |
 | Documentação | Swashbuckle (OpenAPI) |
 | Testes | xUnit, FluentAssertions, Moq, `WebApplicationFactory`, NetArchTest |
 | Entrega | Docker (runtime chiseled, não-root), GitHub Actions, GHCR |
@@ -93,7 +93,6 @@ docker-compose up -d --build
 | Serviço | Endereço |
 | --- | --- |
 | Swagger | http://localhost:8080/swagger |
-| Seq | http://localhost:9000 |
 | PostgreSQL | `localhost:5433` |
 | Redis | `localhost:6380` |
 
@@ -102,7 +101,7 @@ O Postgres e o Redis ficam em portas não padrão de propósito, para coexistir 
 ### API no host, dependências em contêiner
 
 ```bash
-docker-compose up -d db redis seq
+docker-compose up -d db redis
 dotnet run --project src/Api
 ```
 
@@ -130,7 +129,6 @@ A configuração vem de variáveis de ambiente e User Secrets; o `appsettings.js
 | --- | --- |
 | `ConnectionStrings:APITechCurse` | Connection string do PostgreSQL (formato Npgsql) |
 | `ConnectionStrings:RedisCache` | Endereço do Redis |
-| `ConnectionStrings:SeqUrl` | Endereço de ingestão do Seq |
 | `Jwt:Issuer`, `Jwt:Audience` | Emissor e audiência do token |
 | `Jwt:SigningKey` | Chave de assinatura, mínimo de 32 caracteres. Gere com `openssl rand -base64 48` |
 | `Jwt:RefreshTokenDays` | Validade do refresh token (padrão `7`) |

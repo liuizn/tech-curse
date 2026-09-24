@@ -104,7 +104,6 @@ jobs:
       API_IMAGE: tech-curse-api:ci
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-      SEQ_PASSWORD: ${{ secrets.SEQ_PASSWORD }}
       JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
       JWT_ISSUER: GitHubActions_Issuer
       JWT_AUDIENCE: GitHubActions_Audience

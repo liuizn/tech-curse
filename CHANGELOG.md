@@ -16,6 +16,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 | **Banco relacional passou de SQL Server 2022 para PostgreSQL 17** | A connection string `ConnectionStrings:APITechCurse` muda de formato: `Host=...;Port=5432;Database=APITechCurse;Username=...;Password=...;`. Não há migração de dados: as migrations foram regeradas do zero, e um banco SQL Server existente não é reaproveitável |
 | Health check `Database_SQLServer` renomeado para `Database_Postgres` | Ajuste dashboards ou alertas que filtram pelo nome no detalhe de `/health/ready` |
 | Porta do banco no compose passou de `1433` para `5433` no host | Clientes locais apontam para `localhost:5433`; o volume `sqlserver_data` foi substituído por `postgres_data` — rode `docker compose down -v` para descartar o antigo |
+| **Seq removido do projeto**: sai o serviço `seq` do compose, o volume `seq_data`, o pacote `Serilog.Sinks.Seq`, a chave `ConnectionStrings:SeqUrl` e a variável `SEQ_PASSWORD` | Os logs estruturados continuam no console em JSON (`docker compose logs api`). Remova `SEQ_PASSWORD` do `.env` e o volume antigo com `docker volume rm` se quiser liberar o espaço |
 | `POST /tech-curse/Auth/register` não aceita mais `role`: o usuário é sempre criado como `Student` | Clientes que criavam Admin ou Instructor pelo registro passam a usar `POST /tech-curse/Auth/users` autenticados como Admin. O campo `role` enviado no registro é ignorado |
 
 ### 🔐 Segurança

@@ -13,13 +13,6 @@ services:
         limits:
           memory: 256M
 
-  seq:
-    ports: !reset []
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
   api:
     image: ${API_IMAGE}
     pull_policy: never

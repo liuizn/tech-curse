@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Visão geral
 
-API REST em .NET 10 / C# 14 para uma plataforma de cursos (cursos, estudantes, matrículas e pagamentos), estruturada em Clean Architecture + CQRS com Vertical Slices (MediatR), PostgreSQL 17 (EF Core 10 via Npgsql), Redis, Serilog/Seq e autenticação JWT com ASP.NET Core Identity.
+API REST em .NET 10 / C# 14 para uma plataforma de cursos (cursos, estudantes, matrículas e pagamentos), estruturada em Clean Architecture + CQRS com Vertical Slices (MediatR), PostgreSQL 17 (EF Core 10 via Npgsql), Redis, Serilog e autenticação JWT com ASP.NET Core Identity.
 
 O banco foi SQL Server até setembro de 2026. A troca foi de schema, não de dados — não havia produção — e as migrations foram regeradas do zero contra o Npgsql; não existe caminho de upgrade a partir de um banco SQL Server. Ver "Armadilhas conhecidas" para o que a troca ensinou.
 
@@ -43,7 +43,7 @@ dotnet test tests/TechCurse.Application.UnitTests/TechCurse.Application.UnitTest
 dotnet test TechCurse.slnx --filter "Category=Unit"
 ```
 
-Subir a stack completa (API + PostgreSQL + Redis + Seq). Requer `.env` — copie de `.env.example`:
+Subir a stack completa (API + PostgreSQL + Redis). Requer `.env` — copie de `.env.example`:
 
 ```bash
 docker-compose up -d --build
@@ -52,7 +52,7 @@ docker-compose up -d --build
 Rodar só as dependências e a API no host (Swagger em http://localhost:5130/swagger, liveness em `/health/live`, readiness em `/health/ready`):
 
 ```bash
-docker-compose up -d db redis seq
+docker-compose up -d db redis
 ```
 
 ```bash
@@ -121,7 +121,7 @@ Pontos que se repetem em todo o código:
 
 Configuração vem de variáveis de ambiente / connection strings, não de `appsettings.json` (que só tem logging):
 
-- `ConnectionStrings:APITechCurse` (formato Npgsql: `Host=...;Port=5432;Database=APITechCurse;Username=...;Password=...;`), `ConnectionStrings:RedisCache`, `ConnectionStrings:SeqUrl`
+- `ConnectionStrings:APITechCurse` (formato Npgsql: `Host=...;Port=5432;Database=APITechCurse;Username=...;Password=...;`) e `ConnectionStrings:RedisCache`
 - `Jwt:Issuer`, `Jwt:Audience`, `Jwt:SigningKey` (mínimo 32 caracteres — o startup lança exceção se for menor). Gere com `openssl rand -base64 48`
 - `Jwt:RefreshTokenDays` — validade do refresh token (padrão 7)
 - `RateLimiting:Enabled` (padrão `true`), `RateLimiting:GlobalPermitLimit` (200), `RateLimiting:GlobalWindowSeconds` (60), `RateLimiting:AuthPermitLimit` (10), `RateLimiting:AuthWindowSeconds` (60)
